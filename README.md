@@ -2,7 +2,7 @@
 
 ![Build Status](https://github.com/earmuff-jam/invoicer/actions/workflows/main.yml/badge.svg)
 
-[![Production Build Status](https://api.netlify.com/api/v1/badges/3f707319-8e7e-44a4-9a2a-f16f7e83ee19/deploy-status)](https://app.netlify.com/projects/earmuffinvoicer/deploys)
+[![Production Build Status](https://api.netlify.com/api/v1/badges/d020a602-af45-4aea-9396-731fe83146e6/deploy-status)](https://app.netlify.com/projects/homehivesolutionsbe/deploys)
 
 [![License][license-image]][license]
 

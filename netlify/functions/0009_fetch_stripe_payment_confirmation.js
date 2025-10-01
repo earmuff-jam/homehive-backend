@@ -29,7 +29,7 @@ export const handler = async (event) => {
   try {
     const { userId, sessionId, stripeAccountId } = JSON.parse(event.body);
 
-    if ( !userId || !sessionId || !stripeAccountId) {
+    if (!userId || !sessionId || !stripeAccountId) {
       return {
         statusCode: 400,
         body: JSON.stringify({ error: "Missing required fields" }),

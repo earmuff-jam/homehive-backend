@@ -21,6 +21,8 @@ export const handler = async (event) => {
   }
 
   try {
+    const origin = event.headers.origin;
+    const headers = getCorsHeaders(origin);
     const { to, subject, text, html } = JSON.parse(event.body);
 
     if (!to || !subject || !text) {
@@ -46,6 +48,7 @@ export const handler = async (event) => {
 
     return {
       statusCode: 200,
+      headers,
       body: JSON.stringify({ message: "Email sent successfully!" }),
     };
   } catch (error) {

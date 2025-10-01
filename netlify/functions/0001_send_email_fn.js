@@ -11,7 +11,7 @@ const mailerSend = new MailerSend({
 });
 
 const sentFrom = new Sender(process.env.MAILERSEND_FROM_EMAIL);
-
+dsdf;
 export const handler = async (event) => {
   if (event.httpMethod !== "POST") {
     return {

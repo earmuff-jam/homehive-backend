@@ -26,6 +26,6 @@ jobs:
         run: |
           npm run lint
 
-      - name: Build frontend
+      - name: Build backend
         run: |
-          CI=true npm run build
+          CI=true netlify dev

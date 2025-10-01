@@ -11,7 +11,6 @@
 HomeHiveSolutions is a web application designed to simplify the creation and management of invoices. With this app, users can easily create, edit, and manage invoices, keeping track of important details like client information, invoice items, totals, and dates.
 Visit [HomeHiveSolutions](https://homehivesolutions.com/) to learn more.
 
-
 ## Copyright and License
 
 Copyright @ 2023.

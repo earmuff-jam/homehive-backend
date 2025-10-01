@@ -98,8 +98,7 @@ export const handler = async (event) => {
         success_url:
           process.env.STRIPE_PAYMENT_SUCCESS_URL +
           "&session_id={CHECKOUT_SESSION_ID}",
-        cancel_url:
-          process.env.STRIPE_PAYMENT_FAILURE_URL,
+        cancel_url: process.env.STRIPE_PAYMENT_FAILURE_URL,
       },
       {
         stripeAccount: stripeOwnerAccountId, // session is created on behalf of the property owner

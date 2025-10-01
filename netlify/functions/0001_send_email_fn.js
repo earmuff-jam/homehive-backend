@@ -11,7 +11,7 @@ const mailerSend = new MailerSend({
 });
 
 const sentFrom = new Sender(process.env.MAILERSEND_FROM_EMAIL);
-
+dsdf;
 export const handler = async (event) => {
   if (event.httpMethod !== "POST") {
     return {
@@ -21,6 +21,8 @@ export const handler = async (event) => {
   }
 
   try {
+    const origin = event.headers.origin;
+    const headers = getCorsHeaders(origin);
     const { to, subject, text, html } = JSON.parse(event.body);
 
     if (!to || !subject || !text) {
@@ -46,6 +48,7 @@ export const handler = async (event) => {
 
     return {
       statusCode: 200,
+      headers,
       body: JSON.stringify({ message: "Email sent successfully!" }),
     };
   } catch (error) {

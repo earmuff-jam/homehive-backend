@@ -4,6 +4,7 @@
  * Netlify Function to send emails using MailerSend (no templates).
  * Handles POST requests with `to`, `subject`, `text`, and/or `html` content.
  */
+import { populateCorsHeaders } from "api/utils/utils";
 import { EmailParams, MailerSend, Recipient, Sender } from "mailersend";
 
 const mailerSend = new MailerSend({
@@ -22,7 +23,7 @@ export const handler = async (event) => {
 
   try {
     const origin = event.headers.origin;
-    const headers = getCorsHeaders(origin);
+    const headers = populateCorsHeaders(origin);
     const { to, subject, text, html } = JSON.parse(event.body);
 
     if (!to || !subject || !text) {

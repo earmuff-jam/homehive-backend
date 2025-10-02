@@ -20,8 +20,7 @@ export const handler = async (event) => {
     };
   }
 
-  const origin = event.headers.origin;
-  const headers = populateCorsHeaders(origin);
+  const headers = populateCorsHeaders();
 
   if (event.httpMethod === "OPTIONS") {
     return {

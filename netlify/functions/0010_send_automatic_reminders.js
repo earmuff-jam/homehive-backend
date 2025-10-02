@@ -10,6 +10,7 @@
  */
 import dayjs from "dayjs";
 
+import { populateCorsHeaders } from "./utils/utils";
 import admin from "firebase-admin";
 import fs from "fs";
 import path from "path";
@@ -175,10 +176,15 @@ export const handler = async (event) => {
 
     return {
       statusCode: 200,
+      headers: populateCorsHeaders(),
       body: `Processed ${tenantsSnapshot.size} tenants, sent ${emailPromises.length} reminders.`,
     };
   } catch (error) {
     console.error("Error sending reminders:", error);
-    return { statusCode: 500, body: `Error: ${error.message}` };
+    return {
+      statusCode: 500,
+      headers: populateCorsHeaders(),
+      body: `Error: ${error.message}`,
+    };
   }
 };

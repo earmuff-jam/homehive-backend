@@ -6,6 +6,7 @@
  * Must have feature flags enabled for this feature.
  */
 import Stripe from "stripe";
+import { populateCorsHeaders } from "./utils/utils";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: process.env.STRIPE_API_VERSION,
@@ -23,6 +24,7 @@ export const handler = async (event) => {
   if (event.httpMethod !== "POST") {
     return {
       statusCode: 405,
+      headers: populateCorsHeaders(),
       body: JSON.stringify({ error: "Method Not Allowed" }),
     };
   }
@@ -43,11 +45,13 @@ export const handler = async (event) => {
 
     return {
       statusCode: 200,
+      headers: populateCorsHeaders(),
       body: JSON.stringify({ accountId: account.id }),
     };
   } catch (error) {
     return {
       statusCode: 400,
+      headers: populateCorsHeaders(),
       body: JSON.stringify({
         error: error.message || "An error occurred while creating the account",
       }),

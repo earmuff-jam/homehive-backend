@@ -5,6 +5,7 @@
  *
  * Must have feature flags enabled for this feature.
  */
+import { populateCorsHeaders } from "./utils/utils";
 import admin from "firebase-admin";
 import fs from "fs";
 import path from "path";
@@ -54,7 +55,14 @@ export const handler = async (event) => {
     event.queryStringParameters?.key !== AdminAuthorizedKey
   ) {
     console.error("problem fetching required token");
-    return { statusCode: 401, body: "Unauthorized" };
+    return {
+      statusCode: 401,
+      headers: {
+        ...populateCorsHeaders(),
+        "Content-Type": "application/json",
+      },
+      body: "Unauthorized",
+    };
   }
 
   try {
@@ -96,7 +104,10 @@ export const handler = async (event) => {
         `${process.env.VITE_SITE_URL}/.netlify/functions/0001_send_email_fn`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            ...populateCorsHeaders(),
+            "Content-Type": "application/json",
+          },
           body: JSON.stringify({
             to: data?.customer_email,
             subject,
@@ -115,6 +126,10 @@ export const handler = async (event) => {
     }
     return {
       statusCode: 200,
+      headers: {
+        ...populateCorsHeaders(),
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({ success: true, id: docRef.id }),
     };
   } catch (err) {

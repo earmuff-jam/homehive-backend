@@ -5,6 +5,7 @@
  *
  * Must have feature flags enabled for this feature.
  */
+import { populateCorsHeaders } from "./utils/utils";
 import Stripe from "stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
@@ -22,6 +23,7 @@ export const handler = async (event) => {
   if (event.httpMethod !== "POST") {
     return {
       statusCode: 405,
+      headers: populateCorsHeaders(),
       body: JSON.stringify({ error: "Method Not Allowed" }),
     };
   }
@@ -32,6 +34,7 @@ export const handler = async (event) => {
     if (!userId || !sessionId || !stripeAccountId) {
       return {
         statusCode: 400,
+        headers: populateCorsHeaders(),
         body: JSON.stringify({ error: "Missing required fields" }),
       };
     }
@@ -47,6 +50,7 @@ export const handler = async (event) => {
     if (!paymentIntent) {
       return {
         statusCode: 400,
+        headers: populateCorsHeaders(),
         body: JSON.stringify({ error: "No payment intent found" }),
       };
     }
@@ -71,6 +75,7 @@ export const handler = async (event) => {
     ) {
       return {
         statusCode: 200,
+        headers: populateCorsHeaders(),
         body: JSON.stringify({
           session: session,
           paymentMethod: paymentMethodDescription,
@@ -81,6 +86,7 @@ export const handler = async (event) => {
     if (!paymentIntent || paymentIntent.status !== "succeeded") {
       return {
         statusCode: 200,
+        headers: populateCorsHeaders(),
         body: JSON.stringify({
           status: paymentIntent?.status || "unknown",
           message: "Payment not yet completed",
@@ -91,6 +97,7 @@ export const handler = async (event) => {
 
     return {
       statusCode: 200,
+      headers: populateCorsHeaders(),
       body: JSON.stringify({
         status: paymentIntent.status,
         paymentMethod: paymentMethodDescription,
@@ -101,6 +108,7 @@ export const handler = async (event) => {
     console.error("Error confirming payment:", error);
     return {
       statusCode: 500,
+      headers: populateCorsHeaders(),
       body: JSON.stringify({ error: error.message }),
     };
   }

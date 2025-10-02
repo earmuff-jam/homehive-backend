@@ -4,26 +4,34 @@
  * Netlify Function to send emails using MailerSend (no templates).
  * Handles POST requests with `to`, `subject`, `text`, and/or `html` content.
  */
-import { EmailParams, MailerSend, Recipient, Sender } from "mailersend";
 import { populateCorsHeaders } from "./utils/utils";
+import { EmailParams, MailerSend, Recipient, Sender } from "mailersend";
 
 const mailerSend = new MailerSend({
   apiKey: process.env.MAILERSEND_API_KEY,
 });
 
 const sentFrom = new Sender(process.env.MAILERSEND_FROM_EMAIL);
-dsdf;
 export const handler = async (event) => {
-  if (event.httpMethod !== "POST") {
+  if (event.httpMethod !== "POST" || "OPTIONS") {
     return {
       statusCode: 405,
       body: JSON.stringify({ error: "Method Not Allowed" }),
     };
   }
 
+  const origin = event.headers.origin;
+  const headers = populateCorsHeaders(origin);
+
+  if (event.httpMethod === "OPTIONS") {
+    return {
+      statusCode: 200,
+      headers,
+      body: "OK",
+    };
+  }
+
   try {
-    const origin = event.headers.origin;
-    const headers = populateCorsHeaders(origin);
     const { to, subject, text, html } = JSON.parse(event.body);
 
     if (!to || !subject || !text) {
@@ -56,6 +64,7 @@ export const handler = async (event) => {
     console.error("MailerSend error:", JSON.stringify(error));
     return {
       statusCode: 500,
+      headers,
       body: JSON.stringify({ error: "Failed to send email." }),
     };
   }

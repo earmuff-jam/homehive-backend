@@ -12,7 +12,7 @@ const allowOriginUris = process.env.ALLOW_SITE_URIS.split(",").map((uri) =>
  * @param {string} origin
  * @returns Object - default headers with allowed origin
  */
-export const populateCorsHeaders = (origin) => {
+export const populateCorsHeaders = (origin = "") => {
   const isAllowed = allowOriginUris.includes(origin);
 
   return {

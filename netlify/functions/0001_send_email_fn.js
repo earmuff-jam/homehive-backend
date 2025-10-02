@@ -13,7 +13,7 @@ const mailerSend = new MailerSend({
 
 const sentFrom = new Sender(process.env.MAILERSEND_FROM_EMAIL);
 export const handler = async (event) => {
-  if (event.httpMethod !== "POST" || "OPTIONS") {
+  if (("POST" || "OPTIONS") !== event.httpMethod) {
     return {
       statusCode: 405,
       body: JSON.stringify({ error: "Method Not Allowed" }),

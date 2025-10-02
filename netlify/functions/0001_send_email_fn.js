@@ -59,6 +59,7 @@ export const handler = async (event) => {
     if (text) emailParams.setText(text);
     if (html) emailParams.setHtml(html);
 
+    console.error(JSON.stringify(emailParams));
     await mailerSend.email.send(emailParams);
 
     return {

@@ -1,3 +1,18 @@
-
 [build]
-functions = "netlify/functions"
+  functions = "netlify/functions"
+
+# Proxy /api/* requests to external API
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"   # replace with the target API
+  status = 200
+  force = true
+  headers = { X-From = "Netlify" }
+
+# Set CORS headers globally (optional, safer per endpoint)
+[[headers]]
+  for = "/api/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type, Authorization"

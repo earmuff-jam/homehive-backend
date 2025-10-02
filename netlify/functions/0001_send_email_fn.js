@@ -4,7 +4,7 @@
  * Netlify Function to send emails using MailerSend (no templates).
  * Handles POST requests with `to`, `subject`, `text`, and/or `html` content.
  */
-import { populateCorsHeaders } from "./utils/utils";
+// import { populateCorsHeaders } from "./utils/utils";
 import { EmailParams, MailerSend, Recipient, Sender } from "mailersend";
 
 const mailerSend = new MailerSend({
@@ -20,12 +20,14 @@ export const handler = async (event) => {
     };
   }
 
-  const headers = populateCorsHeaders();
-
   if (event.httpMethod === "OPTIONS") {
     return {
       statusCode: 200,
-      headers,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+      },
       body: "OK",
     };
   }
@@ -36,6 +38,11 @@ export const handler = async (event) => {
     if (!to || !subject || !text) {
       return {
         statusCode: 400,
+        headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+      },
         body: JSON.stringify({
           error: "Missing required fields: 'to', 'subject', and either 'text'",
         }),
@@ -56,14 +63,22 @@ export const handler = async (event) => {
 
     return {
       statusCode: 200,
-      headers,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+      },
       body: JSON.stringify({ message: "Email sent successfully!" }),
     };
   } catch (error) {
     console.error("MailerSend error:", JSON.stringify(error));
     return {
       statusCode: 500,
-      headers,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+      },
       body: JSON.stringify({ error: "Failed to send email." }),
     };
   }

@@ -5,6 +5,7 @@
  *
  * Must have feature flags enabled for this feature.
  */
+import { populateCorsHeaders } from "./utils/utils";
 import Stripe from "stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
@@ -20,7 +21,11 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
  */
 export const handler = async (event) => {
   if (event.httpMethod !== "POST") {
-    return { statusCode: 405, body: "Method Not Allowed" };
+    return {
+      statusCode: 405,
+      headers: populateCorsHeaders(),
+      body: "Method Not Allowed",
+    };
   }
 
   try {
@@ -41,6 +46,7 @@ export const handler = async (event) => {
 
     return {
       statusCode: 200,
+      headers: populateCorsHeaders(),
       body: JSON.stringify({
         status: status,
         bankAccount: bank
@@ -61,6 +67,7 @@ export const handler = async (event) => {
   } catch (error) {
     return {
       statusCode: 400,
+      headers: populateCorsHeaders(),
       body: JSON.stringify({ error: error.message }),
     };
   }

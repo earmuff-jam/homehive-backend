@@ -11,4 +11,4 @@ jobs:
       - name: Trigger Netlify Function
         run: |
           curl -X POST \
-          "${{ secrets.SITE_URL }}.netlify/functions/0010_send_automatic_reminders?key=${{ secrets.ADMIN_KEY }}"
+          "${{ secrets.SITE_URL }}/.netlify/functions/0010_send_automatic_reminders?key=${{ secrets.ADMIN_KEY }}"

@@ -15,39 +15,41 @@ import admin from "firebase-admin";
 import fs from "fs";
 import path from "path";
 
-const isLocalDevTestEnv = process.env.DEV_ENV;
-
-if (isLocalDevTestEnv) {
-  if (!admin.apps.length) {
-    const serviceAccountPath = path.resolve("./dev/account.json");
-    const serviceAccount = JSON.parse(
-      fs.readFileSync(serviceAccountPath, "utf8"),
-    );
-
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
-    });
-  }
-} else {
-  if (!admin.apps.length) {
-    admin.initializeApp({
-      credential: admin.credential.cert({
-        projectId: process.env.FIREBASE_ADMIN_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_ADMIN_CLIENT_EMAIL,
-        privateKey: process.env.FIREBASE_ADMIN_PRIVATE_KEY.replace(
-          /\\n/g,
-          "\n",
-        ),
-      }),
-    });
-  }
-}
-
-const db = admin.firestore();
+let db;
+const isLocalDevTestEnv = process.env.DEV_ENV === "true";
 const AdminAuthorizedKey = process.env.ADMIN_KEY;
 
 const standardReminderSettings = {
   GENERAL: [7, 3, 1, 0],
+};
+
+const initializeFirebase = () => {
+  if (!admin.apps.length) {
+    if (isLocalDevTestEnv) {
+      console.log("Running in DEV_ENV");
+      const serviceAccountPath = path.resolve("./dev/account.json");
+      const serviceAccount = JSON.parse(
+        fs.readFileSync(serviceAccountPath, "utf8"),
+      );
+
+      admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+      });
+    } else {
+      admin.initializeApp({
+        credential: admin.credential.cert({
+          projectId: process.env.FIREBASE_ADMIN_PROJECT_ID,
+          clientEmail: process.env.FIREBASE_ADMIN_CLIENT_EMAIL,
+          privateKey: process.env.FIREBASE_ADMIN_PRIVATE_KEY.replace(
+            /\\n/g,
+            "\n",
+          ),
+        }),
+      });
+    }
+  }
+
+  db = admin.firestore();
 };
 
 /**
@@ -59,6 +61,7 @@ const standardReminderSettings = {
  * @param {Object} event - the event payload to be processed.
  */
 export const handler = async (event) => {
+  initializeFirebase();
   if (
     !isLocalDevTestEnv &&
     event.queryStringParameters?.key !== AdminAuthorizedKey

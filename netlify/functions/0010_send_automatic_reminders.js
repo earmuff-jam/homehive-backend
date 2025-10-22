@@ -46,6 +46,7 @@ const initializeFirebase = () => {
           ),
         }),
       });
+      console.log(JSON.stringify(process.env.FIREBASE_ADMIN_PRIVATE_KEY));
     }
   }
 

@@ -135,7 +135,10 @@ export const handler = async (event) => {
           : dayjs(rentData.rentDueDate);
         const diffDays = rentDate.diff(today, "day");
 
-        if (reminders.includes(diffDays) && rentData.status !== "paid") {
+        if (
+          reminders.includes(diffDays) &&
+          (rentData.status !== "paid" || rentData.status !== "manual")
+        ) {
           const totalAmount =
             (Number(rentData.rentAmount || 0) +
               Number(rentData.additionalCharges || 0) +

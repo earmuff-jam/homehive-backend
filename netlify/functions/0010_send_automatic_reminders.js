@@ -36,10 +36,6 @@ const initializeFirebase = () => {
         credential: admin.credential.cert(serviceAccount),
       });
     } else {
-      const key = process.env.FIREBASE_ADMIN_PRIVATE_KEY.replace(/\\n/g, "\n");
-      console.log("key is - ", key);
-      console.log(key.startsWith("-----BEGIN PRIVATE KEY-----"));
-      console.log(key.endsWith("-----END PRIVATE KEY-----\n"));
       admin.initializeApp({
         credential: admin.credential.cert({
           projectId: process.env["FIREBASE_ADMIN_PROJECT_ID"],

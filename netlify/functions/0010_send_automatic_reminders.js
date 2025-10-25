@@ -38,12 +38,12 @@ const initializeFirebase = () => {
     } else {
       admin.initializeApp({
         credential: admin.credential.cert({
-          projectId: process.env.FIREBASE_ADMIN_PROJECT_ID,
-          clientEmail: process.env.FIREBASE_ADMIN_CLIENT_EMAIL,
-          privateKey: process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(
-            /\\n/g,
+          projectId: process.env["FIREBASE_ADMIN_PROJECT_ID"],
+          clientEmail: process.env["FIREBASE_ADMIN_CLIENT_EMAIL"],
+          privateKey: process.env.FIREBASE_ADMIN_PRIVATE_KEY.replace(
+            /\\n/gm,
             "\n",
-          ),
+          ).replace(/\\\\n/gm, "\n"),
         }),
       });
     }
@@ -135,7 +135,10 @@ export const handler = async (event) => {
           : dayjs(rentData.rentDueDate);
         const diffDays = rentDate.diff(today, "day");
 
-        if (reminders.includes(diffDays) && rentData.status !== "paid") {
+        if (
+          reminders.includes(diffDays) &&
+          (rentData.status !== "paid" || rentData.status !== "manual")
+        ) {
           const totalAmount =
             (Number(rentData.rentAmount || 0) +
               Number(rentData.additionalCharges || 0) +

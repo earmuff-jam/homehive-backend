@@ -109,8 +109,8 @@ export const handler = async (event) => {
       const rentSnapshot = await db
         .collection("rents")
         .where("propertyId", "==", propertyId)
-        .where("rentMonth", "==", currentMonth)
-        .where("status", "in", ["intent", "paid"])
+        .where("rentMonth", "==", today.add("1", "month"))
+        .where("status", "not-in", ["intent", "paid"])
         .get();
 
       let subject = "";

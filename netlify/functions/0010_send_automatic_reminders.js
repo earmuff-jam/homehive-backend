@@ -46,7 +46,6 @@ const initializeFirebase = () => {
           ),
         }),
       });
-      console.log(JSON.stringify(process.env.FIREBASE_ADMIN_PRIVATE_KEY));
     }
   }
 
@@ -111,6 +110,7 @@ export const handler = async (event) => {
         .collection("rents")
         .where("propertyId", "==", propertyId)
         .where("rentMonth", "==", currentMonth)
+        .where("status", "in", ["intent", "paid"])
         .get();
 
       let subject = "";

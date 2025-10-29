@@ -55,8 +55,8 @@ const initializeFirebase = () => {
 /**
  * handler fn ...
  *
- * used to retrieve rental payments and associated property. Function
- * attempts to send email to associated rentees if exists.
+ * used to send ARPS (Automatic Payment Reminder System) alert messages if
+ * tenant has not paid the upcomming month's rent. Follows default reminder settings.
  *
  * @param {Object} event - the event payload to be processed.
  */
@@ -103,13 +103,14 @@ export const handler = async (event) => {
       }
 
       const propertyData = propertyDoc.data();
-      const currentMonth = today.format("MMMM");
 
-      // Fetch rent for current month
+      // fetch rent data for upcomming month.
+      // if tenant has paid upcoming months rent no need to send ARPS.
       const rentSnapshot = await db
         .collection("rents")
         .where("propertyId", "==", propertyId)
-        .where("rentMonth", "==", currentMonth)
+        .where("rentMonth", "==", today.add("1", "month"))
+        .where("status", "not-in", ["intent", "paid"])
         .get();
 
       let subject = "";
@@ -125,9 +126,15 @@ export const handler = async (event) => {
             Number(propertyData?.additional_rent || 0);
           subject = `Rent Reminder: Due in ${diffDays} day(s)`;
           text = `Hi ${tenantData.email}, your rent of $${totalAmount.toFixed(2)} is due on ${dueDate.format("MMMM D, YYYY")}. Please pay on time to avoid late fees.`;
+        } else {
+          const totalAmount =
+            Number(propertyData?.rent || 0) +
+            Number(propertyData?.additional_rent || 0);
+          subject = `Rent Reminder: Overdue past ${diffDays} day(s)`;
+          text = `Hi ${tenantData.email}, your rent of $${totalAmount.toFixed(2)} was due on ${dueDate.format("MMMM D, YYYY")}. Review your contract for appropriate late fee surcharges.`;
         }
       } else {
-        // Rent entry exists; tenant has already submitted rent amount
+        // rent snapshot is empty
         const rentDoc = rentSnapshot.docs[0];
         const rentData = rentDoc.data();
         const rentDate = rentData.rentDueDate?.toDate

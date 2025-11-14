@@ -23,6 +23,124 @@ const standardReminderSettings = {
   GENERAL: [7, 3, 1, 0],
 };
 
+/**
+ * handler fn ...
+ *
+ * used to send ARPS (Automatic Payment Reminder System) alert messages if
+ * tenant has not paid the upcomming month's rent. Follows default reminder settings.
+ *
+ * @param {Object} event - the event payload to be processed.
+ */
+export const handler = async (event) => {
+  if (
+    !isLocalDevTestEnv &&
+    event.queryStringParameters?.key !== AdminAuthorizedKey
+  ) {
+    console.error("problem fetching required token");
+    return { statusCode: 401, body: "Unauthorized" };
+  }
+
+  try {
+    const today = dayjs();
+    const emailPromises = [];
+    const reminders = standardReminderSettings.GENERAL;
+
+    initializeFirebase();
+
+    // Fetch all active tenants
+    const tenantSnapshots = await db
+      .collection("tenants")
+      .where("isActive", "==", true)
+      .get();
+
+    for (const tenantDocs of tenantSnapshots.docs) {
+      const tenant = tenantDocs.data();
+      const { id, propertyId, start_date, email } = tenant;
+
+      if (!propertyId) continue;
+
+      const upcommingDueDate = dayjs().date(dayjs(start_date).date());
+      const diffDays = upcommingDueDate.diff(today, "day");
+
+      // doubles down as validation
+      fetchPropertyDetails(propertyId, email);
+
+      // ignores manually paid rent by default
+      const upcomingMonthRentData = fetchUpcomingRentDetails(
+        propertyId,
+        id,
+        upcommingDueDate.toISOString(),
+      );
+
+      const rentAmount = upcomingMonthRentData
+        ? (Number(upcomingMonthRentData.rentAmount || 0) +
+            Number(upcomingMonthRentData.additionalCharges || 0) +
+            Number(upcomingMonthRentData.initialLateFee || 0) +
+            Number(upcomingMonthRentData.dailyLateFee || 0)) /
+          100
+        : Number(tenant.rent) + Number(tenant.additional_rent || 0);
+
+      let subject, text;
+      if (reminders.includes(diffDays)) {
+        // rent is due; send payment reminder emails
+        subject = `Rent Reminder: Due in ${diffDays} day(s)`;
+        text = `Hi ${email}, your rent of $${rentAmount.toFixed(2)} is due on ${upcommingDueDate.format("MMMM D, YYYY")}.`;
+      } else if (diffDays > 0) {
+        // rent is overdue; send overdue reminder emails
+        subject = `Rent Reminder: Overdue by ${Math.abs(diffDays)} day(s)`;
+        text = `Hi ${email}, your rent of $${rentAmount.toFixed(2)} was due on ${upcommingDueDate.format("MMMM D, YYYY")}. Please pay as soon as possible.`;
+      }
+
+      if (subject && text) {
+        emailPromises.push(
+          fetch(
+            `${process.env.SITE_URL}/.netlify/functions/0001_send_email_fn`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                to: email,
+                subject,
+                text,
+              }),
+            },
+          ),
+        );
+      }
+    }
+
+    // Wait for all emails to be sent
+    const results = await Promise.allSettled(emailPromises);
+
+    results.forEach((result, index) => {
+      if (result.status === "fulfilled") {
+        console.log(`Email ${index} sent successfully`, result.value);
+      } else {
+        console.error(`Email ${index} failed`, result.reason);
+      }
+    });
+
+    return {
+      statusCode: 200,
+      headers: populateCorsHeaders(),
+      body: `Processed ${tenantSnapshots.size} tenants, sent ${emailPromises.length} reminders.\n`,
+    };
+  } catch (error) {
+    console.error("Error sending reminders:", error);
+    return {
+      statusCode: 500,
+      headers: populateCorsHeaders(),
+      body: `Error: ${error.message}`,
+    };
+  }
+};
+
+/**
+ * initializeFirebase ...
+ *
+ * utility function used to init the db based on the user
+ * feature flags. Uses service account in conjunction.
+ */
 const initializeFirebase = () => {
   if (!admin.apps.length) {
     if (isLocalDevTestEnv) {
@@ -53,151 +171,60 @@ const initializeFirebase = () => {
 };
 
 /**
- * handler fn ...
+ * fetchPropertyDetails ...
  *
- * used to send ARPS (Automatic Payment Reminder System) alert messages if
- * tenant has not paid the upcomming month's rent. Follows default reminder settings.
+ * used to return property details for matching properties
+ * and where tenants are still active. re-enforce validation.
+ * Tenant must be a rentee within the selected property.
  *
- * @param {Object} event - the event payload to be processed.
+ * @param {string} propertyId - the unique id of the property
+ * @param {string} activeTenantEmail - the tenant email that is currently renting
+ * @returns {object} propertyData - the data matching the selected params
+ *
  */
-export const handler = async (event) => {
-  initializeFirebase();
-  if (
-    !isLocalDevTestEnv &&
-    event.queryStringParameters?.key !== AdminAuthorizedKey
-  ) {
-    console.error("problem fetching required token");
-    return { statusCode: 401, body: "Unauthorized" };
+const fetchPropertyDetails = async (propertyId, activeTenantEmail) => {
+  const propertySnapshot = await db
+    .collection("properties")
+    .where("isDeleted", "==", false)
+    .where("id", "==", propertyId)
+    .where("rentees", "array-contains", activeTenantEmail)
+    .limit(1)
+    .get();
+
+  const propertyDoc = propertySnapshot.docs[0];
+  if (!propertyDoc) {
+    console.error(
+      "problem retrieving selected property. unable to send automatic emails with required property details",
+    );
+    throw new Error("unable to find selected property");
   }
+  return propertyDoc.data();
+};
 
-  try {
-    const today = dayjs();
-    const emailPromises = [];
-    const reminders = standardReminderSettings.GENERAL;
+/**
+ * fetchUpcomingRentDetails ...
+ *
+ * used to return rent details for matching properties
+ * and where tenants are still active. re-enforce validation.
+ * Tenant must be a rentee within the selected property &&
+ * rentMonth must be due of next month. Also ignores rent paid
+ * "manually" or with the stamp of "paid" or "manual".
+ *
+ * @param {string} propertyId - the unique id of the property
+ * @returns {object} rentData - the data matching the selected params
+ *
+ */
+const fetchUpcomingRentDetails = async (propertyId, id, nextMonthStr) => {
+  const rentSnapshot = await db
+    .collection("rents")
+    .where("propertyId", "==", propertyId)
+    .where("tenantId", "==", id)
+    .where("rentMonth", "==", nextMonthStr)
+    .get();
 
-    // Fetch all active tenants
-    const tenantsSnapshot = await db
-      .collection("tenants")
-      .where("isActive", "==", true)
-      .get();
-
-    for (const tenantDoc of tenantsSnapshot.docs) {
-      const tenantData = tenantDoc.data();
-      const propertyId = tenantData?.propertyId;
-
-      // Fetch property for tenant
-      const propertySnapshot = await db
-        .collection("properties")
-        .where("isDeleted", "==", false)
-        .where("id", "==", propertyId)
-        .where("rentees", "array-contains", tenantData.email)
-        .limit(1)
-        .get();
-
-      const propertyDoc = propertySnapshot.docs[0];
-      if (!propertyDoc) {
-        console.error(
-          "problem retrieving selected property. unable to send automatic emails with required property details",
-        );
-        throw new Error("unable to find selected property");
-      }
-
-      const propertyData = propertyDoc.data();
-
-      // fetch rent data for upcomming month.
-      // if tenant has paid upcoming months rent no need to send ARPS.
-      const rentSnapshot = await db
-        .collection("rents")
-        .where("propertyId", "==", propertyId)
-        .where("rentMonth", "==", today.add("1", "month"))
-        .where("status", "not-in", ["intent", "paid"])
-        .get();
-
-      let subject = "";
-      let text = "";
-
-      if (rentSnapshot.empty) {
-        const dueDate = dayjs(tenantData?.start_date);
-        const diffDays = dueDate.diff(today, "day");
-
-        if (reminders.includes(diffDays)) {
-          const totalAmount =
-            Number(propertyData?.rent || 0) +
-            Number(propertyData?.additional_rent || 0);
-          subject = `Rent Reminder: Due in ${diffDays} day(s)`;
-          text = `Hi ${tenantData.email}, your rent of $${totalAmount.toFixed(2)} is due on ${dueDate.format("MMMM D, YYYY")}. Please pay on time to avoid late fees.`;
-        } else {
-          const totalAmount =
-            Number(propertyData?.rent || 0) +
-            Number(propertyData?.additional_rent || 0);
-          subject = `Rent Reminder: Overdue past ${diffDays} day(s)`;
-          text = `Hi ${tenantData.email}, your rent of $${totalAmount.toFixed(2)} was due on ${dueDate.format("MMMM D, YYYY")}. Review your contract for appropriate late fee surcharges.`;
-        }
-      } else {
-        // rent snapshot is empty
-        const rentDoc = rentSnapshot.docs[0];
-        const rentData = rentDoc.data();
-        const rentDate = rentData.rentDueDate?.toDate
-          ? dayjs(rentData.rentDueDate.toDate())
-          : dayjs(rentData.rentDueDate);
-        const diffDays = rentDate.diff(today, "day");
-
-        if (
-          reminders.includes(diffDays) &&
-          (rentData.status !== "paid" || rentData.status !== "manual")
-        ) {
-          const totalAmount =
-            (Number(rentData.rentAmount || 0) +
-              Number(rentData.additionalCharges || 0) +
-              Number(rentData.initialLateFee || 0) +
-              Number(rentData.dailyLateFee || 0)) /
-            100;
-
-          subject = `Rent Reminder: Due in ${diffDays} day(s)`;
-          text = `Hi, your rent of $${totalAmount.toFixed(2)} is due on ${rentDate.format("MMMM D, YYYY")}. Please pay on time to avoid late fees.`;
-        }
-      }
-
-      if (subject && text) {
-        emailPromises.push(
-          fetch(
-            `${process.env.SITE_URL}/.netlify/functions/0001_send_email_fn`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                to: tenantData.email,
-                subject,
-                text,
-              }),
-            },
-          ),
-        );
-      }
-    }
-
-    // Wait for all emails to be sent
-    const results = await Promise.allSettled(emailPromises);
-
-    results.forEach((result, index) => {
-      if (result.status === "fulfilled") {
-        console.log(`Email ${index} sent successfully`, result.value);
-      } else {
-        console.error(`Email ${index} failed`, result.reason);
-      }
-    });
-
-    return {
-      statusCode: 200,
-      headers: populateCorsHeaders(),
-      body: `Processed ${tenantsSnapshot.size} tenants, sent ${emailPromises.length} reminders.`,
-    };
-  } catch (error) {
-    console.error("Error sending reminders:", error);
-    return {
-      statusCode: 500,
-      headers: populateCorsHeaders(),
-      body: `Error: ${error.message}`,
-    };
+  let rentData = rentSnapshot.empty ? null : rentSnapshot.docs[0].data();
+  if (rentData && ["paid", "manual"].includes(rentData.status)) {
+    return null;
   }
+  return rentData;
 };

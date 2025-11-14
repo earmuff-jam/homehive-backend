@@ -51,6 +51,9 @@ web_modules/
 # Optional npm cache directory
 .npm
 
+# deno
+deno.lock
+
 # package-lock.json file to prevent local dev build issues.
 package-lock.json
 

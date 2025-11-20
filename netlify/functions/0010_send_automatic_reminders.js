@@ -55,40 +55,37 @@ export const handler = async (event) => {
 
     for (const tenantDocs of tenantSnapshots.docs) {
       const tenant = tenantDocs.data();
-      const { id, propertyId, start_date, email } = tenant;
-
-      if (!propertyId) continue;
+      const { propertyId, start_date, email } = tenant;
 
       const upcommingDueDate = dayjs().date(dayjs(start_date).date());
       const diffDays = upcommingDueDate.diff(today, "day");
 
       // doubles down as validation
-      fetchPropertyDetails(propertyId, email);
+      const propertyDetails = await fetchPropertyDetails(propertyId, email);
 
-      // ignores manually paid rent by default
-      const upcomingMonthRentData = fetchUpcomingRentDetails(
+      const propertyRent =
+        Number(propertyDetails?.rent || 0) +
+        Number(propertyDetails?.additional_rent || 0);
+
+      const rentRecordExists = await rentRecordExistsFn(
         propertyId,
-        id,
-        upcommingDueDate.toISOString(),
+        upcommingDueDate.format("MMMM"),
       );
 
-      const rentAmount = upcomingMonthRentData
-        ? (Number(upcomingMonthRentData.rentAmount || 0) +
-            Number(upcomingMonthRentData.additionalCharges || 0) +
-            Number(upcomingMonthRentData.initialLateFee || 0) +
-            Number(upcomingMonthRentData.dailyLateFee || 0)) /
-          100
-        : Number(tenant.rent) + Number(tenant.additional_rent || 0);
+      if (rentRecordExists) {
+        // do nth; rent is paid
+        continue;
+      }
 
       let subject, text;
       if (reminders.includes(diffDays)) {
         // rent is due; send payment reminder emails
         subject = `Rent Reminder: Due in ${diffDays} day(s)`;
-        text = `Hi ${email}, your rent of $${rentAmount.toFixed(2)} is due on ${upcommingDueDate.format("MMMM D, YYYY")}.`;
-      } else if (diffDays > 0) {
-        // rent is overdue; send overdue reminder emails
+        text = `Hi ${email}, your rent of $${propertyRent.toFixed(2)} is due on ${upcommingDueDate.format("MMMM D, YYYY")}.`;
+      } else if (diffDays < 0) {
+        // -ve diff days means its past due; send overdue reminder emails
         subject = `Rent Reminder: Overdue by ${Math.abs(diffDays)} day(s)`;
-        text = `Hi ${email}, your rent of $${rentAmount.toFixed(2)} was due on ${upcommingDueDate.format("MMMM D, YYYY")}. Please pay as soon as possible.`;
+        text = `Hi ${email}, your rent of $${propertyRent.toFixed(2)} was due on ${upcommingDueDate.format("MMMM D, YYYY")}. Please pay as soon as possible. As directed in our contract, a one time initial late fee of $${Number(tenant?.initial_late_fee || 0).toFixed(2)} will be automatically applied and daily late fee of $${Number(tenant?.daily_late_fee || 0).toFixed(2)} will be applied every day thereafter.`;
       }
 
       if (subject && text) {
@@ -179,7 +176,7 @@ const initializeFirebase = () => {
  *
  * @param {string} propertyId - the unique id of the property
  * @param {string} activeTenantEmail - the tenant email that is currently renting
- * @returns {object} propertyData - the data matching the selected params
+ * @returns {Promise<Object>} propertyData - the data matching the selected params
  *
  */
 const fetchPropertyDetails = async (propertyId, activeTenantEmail) => {
@@ -202,29 +199,26 @@ const fetchPropertyDetails = async (propertyId, activeTenantEmail) => {
 };
 
 /**
- * fetchUpcomingRentDetails ...
+ * rentRecordExistsFn ...
  *
- * used to return rent details for matching properties
- * and where tenants are still active. re-enforce validation.
- * Tenant must be a rentee within the selected property &&
- * rentMonth must be due of next month. Also ignores rent paid
- * "manually" or with the stamp of "paid" or "manual".
+ * return boolean if rent record exists
  *
  * @param {string} propertyId - the unique id of the property
- * @returns {object} rentData - the data matching the selected params
+ * @returns {Promise<boolean>} true / false - true if rent is paid
  *
  */
-const fetchUpcomingRentDetails = async (propertyId, id, nextMonthStr) => {
+const rentRecordExistsFn = async (propertyId, nextMonthStr) => {
   const rentSnapshot = await db
     .collection("rents")
     .where("propertyId", "==", propertyId)
-    .where("tenantId", "==", id)
     .where("rentMonth", "==", nextMonthStr)
     .get();
 
-  let rentData = rentSnapshot.empty ? null : rentSnapshot.docs[0].data();
+  if (rentSnapshot.empty) return false;
+
+  const rentData = rentSnapshot.docs[0].data();
   if (rentData && ["paid", "manual"].includes(rentData.status)) {
-    return null;
+    return true;
   }
-  return rentData;
+  return false;
 };

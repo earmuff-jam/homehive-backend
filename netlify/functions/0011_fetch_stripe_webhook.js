@@ -231,7 +231,7 @@ const updateDb = async (stripeEventType, data) => {
         updatedOn: dayjs().toISOString(),
       };
       const response = await fetch(
-        `${process.env.VITE_SITE_URL}/.netlify/functions/0012_update_stripe_payments`,
+        `${process.env.SITE_URL}/.netlify/functions/0012_update_stripe_payments`,
         {
           method: "POST",
           headers: {
@@ -259,7 +259,7 @@ const updateDb = async (stripeEventType, data) => {
         updatedOn: dayjs().toISOString(),
       };
       const response = await fetch(
-        `${process.env.VITE_SITE_URL}/.netlify/functions/0012_update_stripe_payments`,
+        `${process.env.SITE_URL}/.netlify/functions/0012_update_stripe_payments`,
         {
           method: "POST",
           headers: {

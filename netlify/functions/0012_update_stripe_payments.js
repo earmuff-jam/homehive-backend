@@ -1,40 +1,14 @@
 /**
  * File : 0012_update_stripe_payments.js
  *
- * This file is used to update the database with new stripe payment information once the payment has been completed. This is an automatic process that uses the webhook workflow to update database
+ * This file is used to update the database with new stripe payment information once the payment has been completed. This is an automatic process that uses the webhook workflow to update the firestore database
  *
  * Must have feature flags enabled for this feature.
  */
-import { populateCorsHeaders } from "./utils/utils";
-import admin from "firebase-admin";
-import fs from "fs";
-import path from "path";
+import { initializeFirebase, populateCorsHeaders } from "./utils/utils";
 
-const isLocalDevTestEnv = process.env.VITE_DEVELOPMENT_ENV;
-
-if (isLocalDevTestEnv) {
-  if (!admin.apps.length) {
-    const serviceAccountPath = path.resolve("./dev/account.json");
-    const serviceAccount = JSON.parse(
-      fs.readFileSync(serviceAccountPath, "utf8"),
-    );
-
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
-    });
-  }
-} else {
-  if (!admin.apps.length) {
-    admin.initializeApp({
-      credential: admin.credential.cert(
-        JSON.parse(process.env.VITE_FIREBASE_SERVICE_ACCOUNT),
-      ),
-    });
-  }
-}
-
-const db = admin.firestore();
-const AdminAuthorizedKey = process.env.VITE_SITE_ADMIN_AUTHORIZED_KEY;
+const isDevEnv = process.env.DEV_ENV;
+const AdminAuthorizedKey = process.env.ADMIN_KEY;
 
 /**
  * handler fn ...
@@ -50,10 +24,7 @@ const AdminAuthorizedKey = process.env.VITE_SITE_ADMIN_AUTHORIZED_KEY;
  * @param {Object} event - the event payload to be processed.
  */
 export const handler = async (event) => {
-  if (
-    !isLocalDevTestEnv &&
-    event.queryStringParameters?.key !== AdminAuthorizedKey
-  ) {
+  if (!isDevEnv && event.queryStringParameters?.key !== AdminAuthorizedKey) {
     console.error("problem fetching required token");
     return {
       statusCode: 401,
@@ -73,6 +44,8 @@ export const handler = async (event) => {
     if (containsMetadata) {
       draftCollection = "rents";
     }
+
+    const db = initializeFirebase(isDevEnv);
     const docRef = db
       .collection(draftCollection)
       .doc(data.stripePaymentIntentID);
@@ -101,7 +74,7 @@ export const handler = async (event) => {
       `;
 
       const response = await fetch(
-        `${process.env.VITE_SITE_URL}/.netlify/functions/0001_send_email_fn`,
+        `${process.env.SITE_URL}/.netlify/functions/0001_send_email_fn`,
         {
           method: "POST",
           headers: {

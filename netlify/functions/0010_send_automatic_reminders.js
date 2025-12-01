@@ -10,13 +10,10 @@
  */
 import dayjs from "dayjs";
 
-import { populateCorsHeaders } from "./utils/utils";
-import admin from "firebase-admin";
-import fs from "fs";
-import path from "path";
+import { initializeFirebase, populateCorsHeaders } from "./utils/utils";
 
 let db;
-const isLocalDevTestEnv = process.env.DEV_ENV === "true";
+const isDevEnv = process.env.DEV_ENV === "true";
 const AdminAuthorizedKey = process.env.ADMIN_KEY;
 
 const standardReminderSettings = {
@@ -33,7 +30,7 @@ const standardReminderSettings = {
  */
 export const handler = async (event) => {
   if (
-    !isLocalDevTestEnv &&
+    !isDevEnv &&
     event.queryStringParameters?.key !== AdminAuthorizedKey
   ) {
     console.error("problem fetching required token");
@@ -45,7 +42,7 @@ export const handler = async (event) => {
     const emailPromises = [];
     const reminders = standardReminderSettings.GENERAL;
 
-    initializeFirebase();
+    db = initializeFirebase(isDevEnv);
 
     // Fetch all active tenants
     const tenantSnapshots = await db
@@ -130,41 +127,6 @@ export const handler = async (event) => {
       body: `Error: ${error.message}`,
     };
   }
-};
-
-/**
- * initializeFirebase ...
- *
- * utility function used to init the db based on the user
- * feature flags. Uses service account in conjunction.
- */
-const initializeFirebase = () => {
-  if (!admin.apps.length) {
-    if (isLocalDevTestEnv) {
-      console.log("Running in DEV_ENV");
-      const serviceAccountPath = path.resolve("./dev/account.json");
-      const serviceAccount = JSON.parse(
-        fs.readFileSync(serviceAccountPath, "utf8"),
-      );
-
-      admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
-      });
-    } else {
-      admin.initializeApp({
-        credential: admin.credential.cert({
-          projectId: process.env["FIREBASE_ADMIN_PROJECT_ID"],
-          clientEmail: process.env["FIREBASE_ADMIN_CLIENT_EMAIL"],
-          privateKey: process.env.FIREBASE_ADMIN_PRIVATE_KEY.replace(
-            /\\n/gm,
-            "\n",
-          ).replace(/\\\\n/gm, "\n"),
-        }),
-      });
-    }
-  }
-
-  db = admin.firestore();
 };
 
 /**

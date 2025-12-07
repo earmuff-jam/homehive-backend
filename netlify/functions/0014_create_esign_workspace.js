@@ -26,7 +26,7 @@ export const handler = async (event) => {
   try {
     const AdminKey = process.env.ESIGN_ADMIN_KEY;
     const { workspaceId } = JSON.parse(event.body);
-    
+
     const response = await fetch(EsignWorkspaceUrl, {
       method: "POST",
       headers: {
@@ -45,10 +45,15 @@ export const handler = async (event) => {
       };
     }
 
+    const workspace = await response.json();
     return {
       statusCode: 200,
       body: JSON.stringify({
-        workspaceId,
+        message: "Workspace created successfully",
+        workspaceId: workspace.id,
+        apiKey: workspace.apiKey,
+        name: workspace.name,
+        createdAt: workspace.createdAt,
       }),
     };
   } catch (err) {

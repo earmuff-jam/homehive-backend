@@ -1,11 +1,14 @@
 /**
- * File : 0014_create_esign_workspace.js
+ * File : 0015_fetch_esign_templates.js
  *
- * This file is used to create workspace for each user.
+ * This file is used to fetch esign templates that are created
+ * by the selected user. The backend responds with a list of all templates
+ * and we transpose the response to return only the templates created
+ * by the selected user.
  *
  * Must have feature flags enabled for this feature.
  */
-import { EsignWorkspaceUrl, populateCorsHeaders } from "./utils/utils";
+import { EsignTemplatesUrl, populateCorsHeaders } from "./utils/utils";
 
 /**
  * handler fn
@@ -25,17 +28,14 @@ export const handler = async (event) => {
 
   try {
     const AdminKey = process.env.ESIGN_ADMIN_KEY;
-    const { workspaceId } = JSON.parse(event.body);
+    const { userId } = JSON.parse(event.body);
 
-    const response = await fetch(EsignWorkspaceUrl, {
-      method: "POST",
+    const response = await fetch(EsignTemplatesUrl, {
+      method: "GET",
       headers: {
         Authorization: AdminKey,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        name: workspaceId,
-      }),
     });
 
     if (!response.ok) {
@@ -45,14 +45,17 @@ export const handler = async (event) => {
       };
     }
 
-    const workspace = await response.json();
+    const { results, pagination } = await response.json();
+
+    console.log(results, pagination);
+    const filteredTemplates = results.filter(
+      (template) => template.createdBy === userId,
+    );
+
     return {
       statusCode: 200,
       body: JSON.stringify({
-        message: "Workspace created successfully",
-        workspaceId: workspace.id,
-        name: workspace.name,
-        createdAt: workspace.created_date,
+        templates: filteredTemplates,
       }),
     };
   } catch (err) {

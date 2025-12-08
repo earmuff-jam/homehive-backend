@@ -45,9 +45,8 @@ export const handler = async (event) => {
       };
     }
 
-    const { results, pagination } = await response.json();
+    const { results } = await response.json();
 
-    console.log(results, pagination);
     const filteredTemplates = results.filter(
       (template) => template.createdBy === userId,
     );

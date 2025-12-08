@@ -2,10 +2,12 @@ import admin from "firebase-admin";
 import fs from "fs";
 import path from "path";
 
-const EsignBaseUrl = "https://api.firma.dev/";
-const EsignWorkspaceUri = "functions/v1/signing-request-api/workspaces";
+const EsignBaseUrl = "https://api.firma.dev/functions/v1/signing-request-api";
+const EsignWorkspaceUri = "/workspaces";
+const EsignTemplatesUri = "/templates";
 
 export const EsignWorkspaceUrl = EsignBaseUrl + EsignWorkspaceUri;
+export const EsignTemplatesUrl = EsignBaseUrl + EsignTemplatesUri;
 
 /**
  * initializeFirebase ...

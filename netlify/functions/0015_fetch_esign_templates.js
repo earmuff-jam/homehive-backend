@@ -8,7 +8,7 @@
  *
  * Must have feature flags enabled for this feature.
  */
-import { EsignTemplatesUrl, populateCorsHeaders } from "./utils/utils";
+import { GoodSignTemplatesUrl, populateCorsHeaders } from "./utils/utils";
 
 /**
  * handler fn
@@ -28,13 +28,11 @@ export const handler = async (event) => {
 
   try {
     const AdminKey = process.env.ESIGN_ADMIN_KEY;
-    const { userId } = JSON.parse(event.body);
 
-    const response = await fetch(EsignTemplatesUrl, {
+    const response = await fetch(GoodSignTemplatesUrl, {
       method: "GET",
       headers: {
-        Authorization: AdminKey,
-        "Content-Type": "application/json",
+        Authorization: `Bearer ${AdminKey}`,
       },
     });
 
@@ -45,19 +43,16 @@ export const handler = async (event) => {
       };
     }
 
-    const { results } = await response.json();
-
-    const filteredTemplates = results.filter(
-      (template) => template.createdBy === userId,
-    );
+    const results = await response.json();
 
     return {
       statusCode: 200,
       body: JSON.stringify({
-        templates: filteredTemplates,
+        templates: results,
       }),
     };
   } catch (err) {
+    console.error("Unable to fetch templates. Error: ", err);
     return {
       statusCode: 500,
       body: JSON.stringify({ error: err.message }),

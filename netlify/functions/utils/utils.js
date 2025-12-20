@@ -3,11 +3,15 @@ import fs from "fs";
 import path from "path";
 
 const EsignBaseUrl = "https://api.firma.dev/functions/v1/signing-request-api";
+const GoodSignBaseUrl = "https://goodsign.io/api";
+
 const EsignWorkspaceUri = "/workspaces";
 const EsignTemplatesUri = "/templates";
 
 export const EsignWorkspaceUrl = EsignBaseUrl + EsignWorkspaceUri;
 export const EsignTemplatesUrl = EsignBaseUrl + EsignTemplatesUri;
+
+export const GoodSignTemplatesUrl = GoodSignBaseUrl + EsignTemplatesUri;
 
 /**
  * initializeFirebase ...

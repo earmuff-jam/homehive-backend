@@ -4,9 +4,14 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Debug netlify functions",
+      "name": "Debug Netlify Functions",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["netlify", "dev"],
+      "runtimeArgs": [
+        "netlify",
+        "dev",
+        "--port",
+        "4225"
+      ],
       "console": "integratedTerminal",
       "envFile": "${workspaceFolder}/.env"
     }

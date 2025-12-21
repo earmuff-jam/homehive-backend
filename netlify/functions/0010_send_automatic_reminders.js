@@ -29,10 +29,7 @@ const standardReminderSettings = {
  * @param {Object} event - the event payload to be processed.
  */
 export const handler = async (event) => {
-  if (
-    !isDevEnv &&
-    event.queryStringParameters?.key !== AdminAuthorizedKey
-  ) {
+  if (!isDevEnv && event.queryStringParameters?.key !== AdminAuthorizedKey) {
     console.error("problem fetching required token");
     return { statusCode: 401, body: "Unauthorized" };
   }
@@ -54,6 +51,11 @@ export const handler = async (event) => {
       const tenant = tenantDocs.data();
       const { propertyId, start_date, email } = tenant;
 
+      // startDate > currentDate; tenant just moved in, no email should be sent
+      // not the same as grace periods
+      if (dayjs(start_date).isAfter(dayjs())) {
+        continue;
+      }
       const upcommingDueDate = dayjs().date(dayjs(start_date).date());
       const diffDays = upcommingDueDate.diff(today, "day");
 

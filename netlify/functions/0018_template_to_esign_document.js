@@ -4,7 +4,12 @@
  * Creates a signing request from an uploaded document
  * and returns an editor URL to modify fields before sending.
  */
-import { populateCorsHeaders } from "./utils/utils";
+import {
+  GoodSignTemplateToEsignUrl,
+  populateApiFields,
+  populateCorsHeaders,
+  populateSignerFields,
+} from "./utils/utils";
 
 export const handler = async (event) => {
   if (event.httpMethod !== "POST") {
@@ -18,9 +23,16 @@ export const handler = async (event) => {
 
   try {
     const API_KEY = process.env.ESIGN_ADMIN_KEY;
-    const { fileData, fileName, userId } = JSON.parse(event.body);
+    const { uuid, doc_name, userId, additional_senders, fields } = JSON.parse(
+      event.body,
+    );
 
-    if (!userId || !fileName || !fileData) {
+    if (
+      !userId ||
+      !uuid ||
+      !doc_name ||
+      (Array.isArray(fields) && fields.length >= 0)
+    ) {
       console.error("Invalid request parameters");
       return {
         statusCode: 400,
@@ -29,74 +41,70 @@ export const handler = async (event) => {
       };
     }
 
-    const uploadRes = await fetch(
-      "https://api.firma.dev/functions/v1/signing-request-api/signing-requests",
-      {
-        method: "POST",
-        headers: {
-          Authorization: API_KEY,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: fileName,
-          description: fileName,
-          document: fileData.replace(/^data:.*;base64,/, ""),
-          settings: {
-            allow_editing_before_sending: true,
-            attach_pdf_on_finish: true,
-            allow_download: true,
-          },
-        }),
-      },
+    const generatedFields = populateApiFields(fields);
+    const generatedPropertyOwnerFields = populateSignerFields(
+      "Property Owner",
+      fields.owner,
+      fields.ownerEmail,
+    );
+    const generatedTenantFields = populateSignerFields(
+      "Tenant",
+      fields.tenant,
+      fields.tenantEmail,
     );
 
+    const draftPayload = {
+      uuid: uuid,
+      doc_name: doc_name,
+      attachment_names_in_order: [],
+      metadata: ["placeholder"],
+      webhook: "", // TODO: netlify function that can handle a simple payload
+      cc_email: additional_senders,
+      smsverify: false,
+      send_in_order: false,
+      duplicate: false,
+      ignore_missing_signers: false,
+      fields: Object.values(generatedFields),
+      signers: [generatedPropertyOwnerFields, generatedTenantFields],
+    };
+
+    const uploadRes = await fetch(GoodSignTemplateToEsignUrl, {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${API_KEY}`,
+        "content-type": "application/json",
+        accept: "application/json",
+      },
+      body: JSON.stringify(draftPayload),
+    });
+
+    const rawText = await uploadRes.text();
+
     if (!uploadRes.ok) {
-      const text = await uploadRes.text();
-      console.error("Upload failed:", text);
+      console.error("Goodsign error:", rawText);
       return {
         statusCode: uploadRes.status,
         headers: populateCorsHeaders(),
-        body: text,
+        body: rawText,
       };
     }
 
-    const signingRequest = await uploadRes.json();
-    console.log("Created signing request successfully:", signingRequest.id);
+    let signingRequest;
+    try {
+      signingRequest = JSON.parse(rawText);
+    } catch {
+      throw new Error("Goodsign returned invalid JSON");
+    }
 
-    const editorRes = await fetch(
-      "https://api.firma.dev/functions/v1/signing-request-api/signing-request-editor-session",
-      {
-        method: "POST",
-        headers: {
-          Authorization: API_KEY,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          signing_request_id: signingRequest.id,
-        }),
-      },
+    console.debug(
+      "Created signing request successfully:",
+      signingRequest.doc.uuid,
     );
-
-    if (!editorRes.ok) {
-      const text = await editorRes.text();
-      console.error("Editor URL creation failed:", text);
-      return {
-        statusCode: editorRes.status,
-        headers: populateCorsHeaders(),
-        body: text,
-      };
-    }
-
-    const editorSession = await editorRes.json();
-    console.log("Generated editor session successfully");
 
     return {
       statusCode: 200,
       headers: populateCorsHeaders(),
-      body: JSON.stringify({
-        signingRequest,
-        editorUrl: editorSession.editor_url,
-      }),
+      body: JSON.stringify(signingRequest),
     };
   } catch (err) {
     console.error("Internal server exception:", err);

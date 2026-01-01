@@ -76,155 +76,242 @@ export const populateCorsHeaders = () => {
  * @returns Object - default api fields
  */
 export const populateApiFields = (fields) => {
-  const fetchValue = (key, valueType, isTenantSigner = false) => {
-    if (fields[key] === undefined) return null;
+  const fetchValue = (
+    key,
+    valueType,
+    trimPrefixLength = 1,
+    isTenantSigner = false,
+  ) => {
+    const trimmedKey = key.substring(trimPrefixLength);
+
+    if (fields[trimmedKey] === undefined) return null;
+
     switch (valueType) {
       case "string":
         return {
           key,
-          value: String(fields[key]),
+          value: String(fields[trimmedKey]),
           info_current_value: "text",
           info_current_contact: "",
           info_current_type: "label",
           info_current_subtype: "",
         };
-      case "boolean":
+
+      case "boolean": {
+        const checked = Boolean(fields[trimmedKey]);
         return {
           key,
-          value: Boolean(fields[key]) ? "\u2713" : "",
-          info_current_value: Boolean(fields[key]) ? "\u2713" : "",
+          value: checked ? "\u2713" : "",
+          info_current_value: checked ? "\u2713" : "",
           info_current_contact: "propertyowner@temp.template",
           info_current_type: "input",
           info_current_subtype: "checkbox",
         };
+      }
 
       case "dateTime":
         return {
           key,
-          value: String(fields[key]),
-          info_current_value: "dd\/mm\/yyyy",
+          value: String(fields[trimmedKey]),
+          info_current_value: "dd/mm/yyyy",
           info_current_contact: isTenantSigner
             ? "tenant@temp.template"
             : "propertyowner@temp.template",
           info_current_type: "input",
           info_current_subtype: "datesigned",
         };
+
       default:
-        return "N/A";
+        return null;
     }
   };
 
-  const draft = Object.fromEntries(
-    Object.entries({
-      county: fetchValue("county", "string"),
-      startDate: fetchValue("startDate", "string"),
-      endDate: fetchValue("endDate", "string"),
-      address: fetchValue("address", "string"),
-      isAutoRenew: fetchValue("isAutoRenew", "boolean"),
-      autoRenewDays: fetchValue("autoRenewDays", "string"),
-      isMonthLastDate: fetchValue("isMonthLastDate", "string"),
-      rent: fetchValue("rent", "string"),
-      isFirstDayRent: fetchValue("isFirstDayRent", "boolean"),
-      rentDueDate: fetchValue("rentDueDate", "string"), // like 4 days after the lease is signed
-      isPayToLandlord: fetchValue("isPayToLandlord", "boolean"),
-      isPayToListingBroker: fetchValue("isPayToListingBroker", "boolean"),
-      isPayToPropertyManager: fetchValue("isPayToPropertyManager", "boolean"),
-      isCashiersCheck: fetchValue("isCashiersCheck", "boolean"),
-      isElectronicPayment: fetchValue("isElectronicPayment", "boolean"),
-      isMoneyOrder: fetchValue("isMoneyOrder", "boolean"),
-      isPersonalCheck: fetchValue("isPersonalCheck", "boolean"),
-      isOtherMeans: fetchValue("isOtherMeans", "boolean"),
-      owner: fetchValue("owner", "string"),
-      tenant: fetchValue("tenant", "string"),
-      address: fetchValue("address", "string"),
-      proratedRent: fetchValue("proratedRent", "string"),
-      proratedRentDueDate: fetchValue("proratedRentDueDate", "string"),
-      isCashiersCheck: fetchValue("isCashiersCheck", "boolean"),
-      isElectronicPayment: fetchValue("isElectronicPayment", "boolean"),
-      isMoneyOrder: fetchValue("isMoneyOrder", "boolean"),
-      isPersonalCheck: fetchValue("isPersonalCheck", "boolean"),
-      isOtherMeans: fetchValue("isOtherMeans", "boolean"),
-      owner: fetchValue("owner", "string"),
-      paymentID: fetchValue("paymentID", "string"),
-      isCashiersCheck: fetchValue("isCashiersCheck", "boolean"),
-      isElectronicPayment: fetchValue("isElectronicPayment", "boolean"),
-      isMoneyOrder: fetchValue("isMoneyOrder", "boolean"),
-      isPersonalCheck: fetchValue("isPersonalCheck", "boolean"),
-      isOtherMeans: fetchValue("isOtherMeans", "boolean"),
-      isCashiersCheck: fetchValue("isCashiersCheck", "boolean"),
-      isElectronicPayment: fetchValue("isElectronicPayment", "boolean"),
-      isMoneyOrder: fetchValue("isMoneyOrder", "boolean"),
-      isPersonalCheck: fetchValue("isPersonalCheck", "boolean"),
-      isOtherMeans: fetchValue("isOtherMeans", "boolean"),
-      isExtraChargeNotAdded: fetchValue("isExtraChargeNotAdded", "boolean"),
-      isMonthlyPaymentsRequired: fetchValue(
-        "isMonthlyPaymentsRequired",
-        "boolean",
-      ),
-      address: fetchValue("address", "string"),
-      rentPaymentDeadline: fetchValue("rentPaymentDeadline", "string"),
-      initialLateFee: fetchValue("initialLateFee", "string"),
-      dailyLateFee: fetchValue("dailyLateFee", "string"),
-      isInitialLateFee: fetchValue("isInitialLateFee", "boolean"),
-      returnedPaymentFee: fetchValue("returnedPaymentFee", "string"),
-      initialAnimalViolationFee: fetchValue(
-        "initialAnimalViolationFee",
-        "string",
-      ),
-      dailyAnimalViolationFee: fetchValue("dailyAnimalViolationFee", "string"),
-      address: fetchValue("address", "string"),
-      securityDeposit: fetchValue("securityDeposit", "string"),
-      isCashiersCheck: fetchValue("isCashiersCheck", "boolean"),
-      isElectronicPayment: fetchValue("isElectronicPayment", "boolean"),
-      isMoneyOrder: fetchValue("isMoneyOrder", "boolean"),
-      isPersonalCheck: fetchValue("isPersonalCheck", "boolean"),
-      isOtherMeans: fetchValue("isOtherMeans", "boolean"),
-      address: fetchValue("address", "string"),
-      ownerCoveredUtilities: fetchValue("ownerCoveredUtilities", "string"),
-      address: fetchValue("address", "string"),
-      isHoa: fetchValue("isHoa", "boolean"),
-      isNotHOA: fetchValue("isNotHOA", "boolean"),
-      hoaDetails: fetchValue("hoaDetails", "boolean"),
-      guestsPermittedStayDays: fetchValue("guestsPermittedStayDays", "string"),
-      allowedVehicleCounts: fetchValue("allowedVehicleCounts", "string"),
-      address: fetchValue("address", "string"),
-      tripCharge: fetchValue("tripCharge", "string"),
-      allowKeyboxSince: fetchValue("allowKeyboxSince", "string"),
-      removeKeyboxFee: fetchValue("removeKeyboxFee", "string"),
-      address: fetchValue("address", "string"),
-      inventoryCompleteWithin: fetchValue("inventoryCompleteWithin", "string"),
-      address: fetchValue("address", "string"),
-      isTenantCleaningYard: fetchValue("isTenantCleaningYard", "boolean"),
-      address: fetchValue("address", "string"),
-      isSmokingNotAllowed: fetchValue("isSmokingNotAllowed", "boolean"),
-      emergencyContactNumber: fetchValue("emergencyContactNumber", "string"),
-      address: fetchValue("address", "string"),
-      address: fetchValue("address", "string"),
-      address: fetchValue("address", "string"),
-      address: fetchValue("address", "string"),
-      specialProvisions: fetchValue("specialProvisions", "string"),
-      address: fetchValue("address", "string"),
-      rentalFloodDisclosure: fetchValue("rentalFloodDisclosure", "boolean"),
-      tenant: fetchValue("tenant", "string"),
-      owner: fetchValue("owner", "string"),
-      tenantEmail: fetchValue("tenantEmail", "string"),
-      ownerEmail: fetchValue("ownerEmail", "string"),
-      address: fetchValue("address", "string"),
-      city: fetchValue("city", "string"),
-      state: fetchValue("state", "string"),
-      zipCode: fetchValue("zipCode", "string"),
-      brokerName: fetchValue("brokerName", "string"),
-      isBrokerManaged: fetchValue("isBrokerManaged", "boolean"),
-      isNotBrokerManaged: fetchValue("isNotBrokerManaged", "boolean"),
-      isOwnerManaged: fetchValue("isOwnerManaged", "boolean"),
-      isManagerManaged: fetchValue("isManagerManaged", "boolean"),
-      managerName: fetchValue("managerName", "string"),
-      managerAddress: fetchValue("managerAddress", "string"),
-      managerPhone: fetchValue("managerPhone", "string"),
-      datesigned1: fetchValue("dateSigned1", "dateTime"),
-      datesigned2: fetchValue("dateSigned2", "dateTime", true),
-    }).filter(([_, v]) => v !== null),
-  );
+  const FIELD_SCHEMA = [
+    // ===== PAGE 1 =====
+    ["1owner", "string"],
+    ["1tenant", "string"],
+    ["2address", "string"],
+    ["2county", "string"],
+    ["3startDate", "string"],
+    ["3endDate", "string"],
+
+    // ===== PAGE 2 =====
+    ["page2address", "string", 5],
+    ["page2city", "string", 5],
+    ["page2state", "string", 5],
+
+    ["4isAutoRenew", "boolean"],
+    ["4autoRenewDays", "string"],
+    ["4isMonthLastDate", "boolean"],
+
+    // ===== SECTION 5A  =====
+    ["5rent", "string"],
+    ["5isFirstDayRent", "boolean"],
+    ["5aisPayToLandlord", "boolean", 2],
+    ["5aisPayToListingBroker", "boolean", 2],
+    ["5aisPayToPropertyManager", "boolean", 2],
+    ["5rentDueDate", "string"],
+    ["5aisCashiersCheck", "boolean", 2],
+    ["5aisElectronicPayment", "boolean", 2],
+    ["5aisMoneyOrder", "boolean", 2],
+    ["5aisPersonalCheck", "boolean", 2],
+    ["5aisOtherMeans", "boolean", 2],
+
+    // ===== SECTION 5B =====
+    ["5proratedRent", "string"],
+    ["5proratedRentDueDate", "string"],
+    ["5bisCashiersCheck", "boolean", 2],
+    ["5bisElectronicPayment", "boolean", 2],
+    ["5bisMoneyOrder", "boolean", 2],
+    ["5bisPersonalCheck", "boolean", 2],
+    ["5bisOtherMeans", "boolean", 2],
+
+    // ===== SECTION 5C =====
+    ["5owner", "string"],
+    ["5paymentID", "string"],
+
+    // ===== SECTION 5D =====
+    ["5disMonthlyPaymentsRequired", "boolean", 2],
+    ["5disCashiersCheck", "boolean", 2],
+    ["5disElectronicPayment", "boolean", 2],
+    ["5disMoneyOrder", "boolean", 2],
+    ["5disPersonalCheck", "boolean", 2],
+    ["5disOtherMeans", "boolean", 2],
+
+    ["5d2isCashiersCheck", "boolean", 3],
+    ["5d2isElectronicPayment", "boolean", 3],
+    ["5d2isMoneyOrder", "boolean", 3],
+    ["5d2isPersonalCheck", "boolean", 3],
+    ["5d2isOtherMeans", "boolean", 3],
+
+    // ===== PAGE 3 =====
+    ["page3address", "string", 5],
+    ["page3city", "string", 5],
+    ["page3state", "string", 5],
+    ["6initialLateFee", "string"],
+    ["6dailyLateFee", "string"],
+    ["6isInitialLateFee", "boolean"],
+    ["7returnedPaymentFee", "string"],
+    ["9initialAnimalViolationFee", "string"],
+    ["9dailyAnimalViolationFee", "string"],
+
+    // ===== PAGE 4 =====
+    ["page4address", "string", 5],
+    ["page4city", "string", 5],
+    ["page4state", "string", 5],
+    ["10securityDeposit", "string", 2],
+    ["10isCashiersCheck", "boolean", 2],
+    ["10isElectronicPayment", "boolean", 2],
+    ["10isMoneyOrder", "boolean", 2],
+    ["10isPersonalCheck", "boolean", 2],
+    ["10isOtherMeans", "boolean", 2],
+
+    // ===== PAGE 5 =====
+    ["page5address", "string", 5],
+    ["page5city", "string", 5],
+    ["page5state", "string", 5],
+    ["11ownerCoveredUtilities", "string", 2],
+
+    // ===== PAGE 6 =====
+    ["page6address", "string", 5],
+    ["page6city", "string", 5],
+    ["page6state", "string", 5],
+    ["12isHoa", "boolean", 2],
+    ["12isNotHoa", "boolean", 2],
+    ["12hoaDetails", "string", 2],
+    ["12guestsPermittedStayDays", "string", 2],
+    ["13allowedVehicleCounts", "string", 2],
+
+    // ===== PAGE 7 =====
+    ["page7address", "string", 5],
+    ["page7city", "string", 5],
+    ["page7state", "string", 5],
+
+    ["14tripCharge", "string", 2],
+    ["14allowKeyboxSince", "string", 2],
+    ["14removeKeyboxFee", "string", 2],
+
+    // ===== PAGE 8 =====
+    ["page8address", "string", 5],
+    ["page8city", "string", 5],
+    ["page8state", "string", 5],
+    ["15inventoryCompleteWithin", "string", 2],
+
+    // ===== PAGE 9 =====
+    ["page9address", "string", 5],
+    ["page9city", "string", 5],
+    ["page9state", "string", 5],
+    ["17isTenantCleaningYard", "boolean", 2],
+
+    // ===== PAGE 10 =====
+    ["page10address", "string", 6],
+    ["page10city", "string", 6],
+    ["page10state", "string", 6],
+    ["17isSmokingNotAllowed", "boolean", 2],
+    ["18emergencyContactNumber", "string", 2],
+
+    // ===== PAGE 11 =====
+    ["page11address", "string", 6],
+    ["page11city", "string", 6],
+    ["page11state", "string", 6],
+
+    // ===== PAGE 12 =====
+    ["page12address", "string", 6],
+    ["page12city", "string", 6],
+    ["page12state", "string", 6],
+
+    // ===== PAGE 13 =====
+    ["page13address", "string", 6],
+    ["page13city", "string", 6],
+    ["page13state", "string", 6],
+    ["26specialProvisions", "string", 2],
+
+    // ===== PAGE 14 =====
+    ["page14address", "string", 6],
+    ["page14city", "string", 6],
+    ["page14state", "string", 6],
+
+    // ===== PAGE 15 =====
+    ["page15address", "string", 6],
+    ["page15city", "string", 6],
+    ["page15state", "string", 6],
+    ["31rentalFloodDisclosure", "boolean", 2],
+    ["32tenant", "string", 2],
+    ["32owner", "string", 2],
+    ["32tenantEmail", "string", 2],
+    ["32ownerEmail", "string", 2],
+
+    // ===== PAGE 16 =====
+    ["page16address", "string", 6],
+    ["page16city", "string", 6],
+    ["page16state", "string", 6],
+
+    // ===== PAGE 17 =====
+    ["page17address", "string", 6],
+    ["page17city", "string", 6],
+    ["page17state", "string", 6],
+    ["34brokerName", "string", 2],
+    ["34isBrokerManaged", "boolean", 2],
+    ["34isNotBrokerManaged", "boolean", 2],
+    ["34isOwnerManaged", "boolean", 2],
+    ["34isManagerManaged", "boolean", 2],
+    ["34managerName", "string", 2],
+    ["34managerAddress", "string", 2],
+    ["34managerPhone", "string", 2],
+
+    // ===== SIGNATURES =====
+    ["dateSigned1", "dateTime", 0],
+    ["dateSigned2", "dateTime", 0, true],
+  ];
+
+  const draft = {};
+
+  for (const [key, type, trim = 1, tenantSigner = false] of FIELD_SCHEMA) {
+    const value = fetchValue(key, type, trim, tenantSigner);
+    if (value !== null) {
+      draft[key] = value;
+    }
+  }
 
   return draft;
 };

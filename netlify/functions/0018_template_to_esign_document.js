@@ -23,7 +23,6 @@ export const handler = async (event) => {
 
   try {
     const API_KEY = process.env.ESIGN_ADMIN_KEY;
-    const WEBHOOK_KEY = process.env.ESIGN_WEBHOOK_KEY;
     const { uuid, doc_name, userId, additional_senders, fields } = JSON.parse(
       event.body,
     );
@@ -59,7 +58,7 @@ export const handler = async (event) => {
       doc_name: doc_name,
       attachment_names_in_order: [],
       metadata: ["placeholder"],
-      webhook: "WEBHOOK_KEY",
+      webhook: "", // TODO: netlify function that can handle a simple payload
       cc_email: additional_senders,
       smsverify: false,
       send_in_order: false,
@@ -69,17 +68,10 @@ export const handler = async (event) => {
       signers: [generatedPropertyOwnerFields, generatedTenantFields],
     };
 
-    console.log(draftPayload);
-
     const uploadRes = await fetch(GoodSignTemplateToEsignUrl, {
       method: "POST",
-      // headers: {
-      //   Authorization: API_KEY,
-      //   "Content-Type": "application/json",
-      // },
       headers: {
-        authorization:
-          "Bearer ",
+        authorization: `Bearer ${API_KEY}`,
         "content-type": "application/json",
         accept: "application/json",
       },
@@ -104,7 +96,7 @@ export const handler = async (event) => {
       throw new Error("Goodsign returned invalid JSON");
     }
 
-    console.log(
+    console.debug(
       "Created signing request successfully:",
       signingRequest.doc.uuid,
     );
@@ -114,7 +106,6 @@ export const handler = async (event) => {
       headers: populateCorsHeaders(),
       body: JSON.stringify(signingRequest),
     };
-    
   } catch (err) {
     console.error("Internal server exception:", err);
     return {

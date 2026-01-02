@@ -5,6 +5,9 @@
  * and returns an editor URL to modify fields before sending.
  */
 import {
+  DocumentOnePageSchema,
+  DocumentThreePageSchema,
+  DocumentTwoPageSchema,
   GoodSignTemplateToEsignUrl,
   populateApiFields,
   populateCorsHeaders,
@@ -27,12 +30,7 @@ export const handler = async (event) => {
       event.body,
     );
 
-    if (
-      !userId ||
-      !uuid ||
-      !doc_name ||
-      (Array.isArray(fields) && fields.length >= 0)
-    ) {
+    if (!userId || !uuid || !doc_name || Array.isArray(fields)) {
       console.error("Invalid request parameters");
       return {
         statusCode: 400,
@@ -41,7 +39,11 @@ export const handler = async (event) => {
       };
     }
 
-    const generatedFields = populateApiFields(fields);
+    const generatedFields = populateApiFields(fields, [
+      ...DocumentOnePageSchema,
+      ...DocumentTwoPageSchema,
+      ...DocumentThreePageSchema,
+    ]);
     const generatedPropertyOwnerFields = populateSignerFields(
       "Property Owner",
       fields.owner,

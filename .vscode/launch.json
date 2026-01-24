@@ -2,18 +2,16 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Debug Netlify Functions",
       "type": "node",
       "request": "launch",
-      "name": "Debug Netlify Functions",
       "runtimeExecutable": "npx",
-      "runtimeArgs": [
-        "netlify",
-        "dev",
-        "--port",
-        "4225"
-      ],
+      "runtimeArgs": ["netlify", "dev", "--port", "4225"],
+      "env": {
+        "NODE_OPTIONS": "--inspect=9229"
+      },
       "console": "integratedTerminal",
-      "envFile": "${workspaceFolder}/.env"
+      "skipFiles": ["<node_internals>/**"]
     }
   ]
 }

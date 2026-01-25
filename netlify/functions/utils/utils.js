@@ -1,6 +1,7 @@
 import admin from "firebase-admin";
 import fs from "fs";
 import path from "path";
+import { rgb } from "pdf-lib";
 
 const EsignBaseUrl = "https://api.firma.dev/functions/v1/signing-request-api";
 const GoodSignBaseUrl = "https://goodsign.io/api";
@@ -230,13 +231,9 @@ export const DocumentThreePageSchema = [
   ["ext-tenant", "string", 4],
   ["ext-dateSigned2", "dateTime", 4, true],
 ];
-/**
- * initializeFirebase ...
- *
- * utility function used to init the db as an admin. Uses service account in conjunction.
- *
- * @returns Object - firebase db with admin priv
- */
+
+// initializeFirebase ...
+// defines a function that initializes firebase
 export const initializeFirebase = (isDevEnv = false) => {
   if (!admin.apps.length) {
     if (isDevEnv) {
@@ -266,13 +263,8 @@ export const initializeFirebase = (isDevEnv = false) => {
   return admin.firestore();
 };
 
-/**
- * populateCorsHeaders ...
- *
- * function used to populate default cors headers.
- *
- * @returns Object - default headers required
- */
+// populateCorsHeaders ...
+// defines a function that populates cors headers for each functions
 export const populateCorsHeaders = () => {
   return {
     "Access-Control-Allow-Origin": "*",
@@ -281,13 +273,8 @@ export const populateCorsHeaders = () => {
   };
 };
 
-/**
- * populateApiFields ...
- *
- * used to populate api fields for residential lease for goodsign api
- *
- * @returns Object - default api fields
- */
+// populateApiFields ...
+// defines a function that populates api fields for esign template
 export const populateApiFields = (fields, schemas = []) => {
   const fetchValue = (
     key,
@@ -350,11 +337,8 @@ export const populateApiFields = (fields, schemas = []) => {
   return draft;
 };
 
-/**
- * populateSignerFields...
- *
- * used to populate the signer fields for the signing parties
- */
+// populateSignerFields ...
+// defines a function that populates signer fields for esign template
 export const populateSignerFields = (key, name, email) => {
   return Object.assign(
     {},
@@ -366,3 +350,38 @@ export const populateSignerFields = (key, name, email) => {
     },
   );
 };
+
+// DefaultInvoiceStatusOptions ...
+// defines the type for default invoice status options
+export const DefaultInvoiceStatusOptions = [
+  {
+    id: 1,
+    label: "Paid",
+    textColor: rgb(0, 0, 0), // black
+    borderColor: rgb(0.94, 0.27, 0.27),
+  },
+  {
+    id: 2,
+    label: "Draft",
+    textColor: rgb(1, 1, 1),
+    borderColor: rgb(0.94, 0.27, 0.27),
+  },
+  {
+    id: 3,
+    label: "Overdue",
+    textColor: rgb(1, 1, 1),
+    borderColor: rgb(0.94, 0.27, 0.27), // red
+  },
+  {
+    id: 4,
+    label: "Cancelled",
+    textColor: rgb(1, 1, 1),
+    borderColor: rgb(0.94, 0.27, 0.27),
+  },
+  {
+    id: 5,
+    label: "None",
+    textColor: rgb(1, 1, 1),
+    borderColor: rgb(1, 1, 1),
+  },
+];

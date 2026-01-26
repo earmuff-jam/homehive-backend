@@ -1,30 +1,33 @@
 /**
  * File : 0009_fetch_stripe_payment_confirmation.js
- *
  * This file is used to confirm payments
- *
  * Must have feature flags enabled for this feature.
  */
-import { populateCorsHeaders } from "./utils/utils";
+import { Constants } from "./utils/constants";
+import { populateCorsHeaders, validateRequest } from "./utils/utils";
 import Stripe from "stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: process.env.STRIPE_API_VERSION,
 });
 
-/**
- * handler fn
- *
- * handler fn to create a checkout session
- *
- * @param {Object} event - The event payload passed
- */
 export const handler = async (event) => {
+  const isValidRequest = validateRequest(event.headers["x-api-key"]);
+  if (!isValidRequest) {
+    console.debug(Constants.MethodNotAuthorized);
+    return {
+      statusCode: 401,
+      headers: populateCorsHeaders(),
+      body: JSON.stringify({ error: Constants.MethodNotAuthorized }),
+    };
+  }
+
   if (event.httpMethod !== "POST") {
+    console.debug(Constants.MethodNotAllowed);
     return {
       statusCode: 405,
       headers: populateCorsHeaders(),
-      body: JSON.stringify({ error: "Method Not Allowed" }),
+      body: JSON.stringify({ error: Constants.MethodNotAllowed }),
     };
   }
 
@@ -32,10 +35,11 @@ export const handler = async (event) => {
     const { userId, sessionId, stripeAccountId } = JSON.parse(event.body);
 
     if (!userId || !sessionId || !stripeAccountId) {
+      console.debug(Constants.MissingRequiredFields);
       return {
         statusCode: 400,
         headers: populateCorsHeaders(),
-        body: JSON.stringify({ error: "Missing required fields" }),
+        body: JSON.stringify({ error: Constants.MissingRequiredFields }),
       };
     }
 
@@ -48,10 +52,13 @@ export const handler = async (event) => {
     const paymentIntent = session.payment_intent;
 
     if (!paymentIntent) {
+      console.debug(Constants.MissingPaymentIntentFromStripe);
       return {
         statusCode: 400,
         headers: populateCorsHeaders(),
-        body: JSON.stringify({ error: "No payment intent found" }),
+        body: JSON.stringify({
+          error: Constants.MissingPaymentIntentFromStripe,
+        }),
       };
     }
 
@@ -70,8 +77,8 @@ export const handler = async (event) => {
     }
 
     if (
-      session?.payment_status === "paid" ||
-      paymentIntent.status === "succeeded"
+      session?.payment_status === Constants.StripePaymentStatusCompleted ||
+      paymentIntent.status === Constants.StripePaymentIntentStatusCompleted
     ) {
       return {
         statusCode: 200,
@@ -83,29 +90,37 @@ export const handler = async (event) => {
       };
     }
 
-    if (!paymentIntent || paymentIntent.status !== "succeeded") {
+    if (
+      !paymentIntent ||
+      paymentIntent.status !== Constants.StripePaymentIntentStatusCompleted
+    ) {
+      console.debug(Constants.MissingOrInvalidPaymentIntentFromStripe);
       return {
         statusCode: 200,
         headers: populateCorsHeaders(),
         body: JSON.stringify({
-          status: paymentIntent?.status || "unknown",
-          message: "Payment not yet completed",
+          status: paymentIntent?.status || Constants.UnknownErrorOccured,
+          message: Constants.MissingOrInvalidPaymentIntentFromStripe,
           session: session,
         }),
       };
     }
 
+    console.debug(Constants.PaymentRecievedYetToProcess);
     return {
       statusCode: 200,
       headers: populateCorsHeaders(),
       body: JSON.stringify({
         status: paymentIntent.status,
         paymentMethod: paymentMethodDescription,
-        message: "Payment not yet completed",
+        message: Constants.PaymentRecievedYetToProcess,
       }),
     };
   } catch (error) {
-    console.error("Error confirming payment:", error);
+    console.error(
+      "failed to process stripe payment confirmation. details ",
+      error,
+    );
     return {
       statusCode: 500,
       headers: populateCorsHeaders(),

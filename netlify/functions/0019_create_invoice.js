@@ -1,17 +1,27 @@
 /**
  * File : 0002_generate_pdf_fn.js
- *
  * Netlify Function to generate a PDF and return it as a response.
  */
 import dayjs from "dayjs";
 
+import { Constants } from "./utils/constants";
 import {
   DefaultInvoiceStatusOptions,
   populateCorsHeaders,
+  validateRequest,
 } from "./utils/utils";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 
 export const handler = async (event) => {
+  const isValidRequest = validateRequest(event.headers["x-api-key"]);
+  if (!isValidRequest) {
+    console.debug(Constants.MethodNotAuthorized);
+    return {
+      statusCode: 401,
+      headers: populateCorsHeaders(),
+      body: JSON.stringify({ error: "Unauthorized" }),
+    };
+  }
   if (event.httpMethod !== "POST" && event.httpMethod !== "OPTIONS") {
     return {
       statusCode: 405,
@@ -29,18 +39,6 @@ export const handler = async (event) => {
   }
 
   try {
-    const IntegrationApiKey = process.env.INTEGRATION_KEY;
-
-    const apiKey = event.headers["x-api-key"];
-
-    if (apiKey !== IntegrationApiKey) {
-      return {
-        statusCode: 401,
-        headers: populateCorsHeaders(),
-        body: JSON.stringify({ error: "Unauthorized" }),
-      };
-    }
-
     const payload = JSON.parse(event.body);
 
     if (!payload || !payload.title) {

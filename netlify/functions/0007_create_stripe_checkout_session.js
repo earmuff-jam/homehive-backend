@@ -5,7 +5,8 @@
  *
  * Must have feature flags enabled for this feature.
  */
-import { populateCorsHeaders } from "./utils/utils";
+import { Constants } from "./utils/constants";
+import { populateCorsHeaders, validateRequest } from "./utils/utils";
 import Stripe from "stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
@@ -20,11 +21,22 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
  * @param {Object} event - The event payload passed
  */
 export const handler = async (event) => {
+  const isValidRequest = validateRequest(event.headers["x-api-key"]);
+  if (!isValidRequest) {
+    console.debug(Constants.MethodNotAuthorized);
+    return {
+      statusCode: 401,
+      headers: populateCorsHeaders(),
+      body: JSON.stringify({ error: Constants.MethodNotAuthorized }),
+    };
+  }
+
   if (event.httpMethod !== "POST") {
+    console.debug(Constants.MethodNotAllowed);
     return {
       statusCode: 405,
       headers: populateCorsHeaders(),
-      body: "Method Not Allowed",
+      body: JSON.stringify({ error: Constants.MethodNotAllowed }),
     };
   }
 
@@ -41,6 +53,26 @@ export const handler = async (event) => {
       rentMonth,
       tenantEmail,
     } = JSON.parse(event.body);
+
+    if (
+      !rentAmount ||
+      !additionalCharges ||
+      !initialLateFee ||
+      !dailyLateFee ||
+      !stripeOwnerAccountId ||
+      !propertyId ||
+      !propertyOwnerId ||
+      !tenantId ||
+      !rentMonth ||
+      !tenantEmail
+    ) {
+      console.debug(Constants.MethodNotAuthorized);
+      return {
+        statusCode: 401,
+        headers: populateCorsHeaders(),
+        body: JSON.stringify({ error: Constants.MethodNotAuthorized }),
+      };
+    }
 
     const session = await stripe.checkout.sessions.create(
       {
@@ -116,7 +148,7 @@ export const handler = async (event) => {
       body: JSON.stringify({ id: session.id, url: session.url }),
     };
   } catch (err) {
-    console.error("Stripe Checkout Error:", err.message);
+    console.error("failed to create stripe checkout session. details ", err);
     return {
       statusCode: 400,
       headers: populateCorsHeaders(),

@@ -16,13 +16,6 @@ import Stripe from "stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-/**
- * handler fn
- *
- * used to retrive and update db based on stripe webhook responses.
- *
- * @param {Object} event - the event payload to be processed.
- */
 export const handler = async (event) => {
   const sig = event.headers["stripe-signature"];
   let stripeEvent;

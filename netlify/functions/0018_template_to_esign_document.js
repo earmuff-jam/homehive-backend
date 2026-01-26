@@ -4,6 +4,7 @@
  * Creates a signing request from an uploaded document
  * and returns an editor URL to modify fields before sending.
  */
+import { Constants } from "./utils/constants";
 import {
   DocumentOnePageSchema,
   DocumentThreePageSchema,
@@ -12,30 +13,40 @@ import {
   populateApiFields,
   populateCorsHeaders,
   populateSignerFields,
+  validateRequest,
 } from "./utils/utils";
 
 export const handler = async (event) => {
+  const isValidRequest = validateRequest(event.headers["x-api-key"]);
+  if (!isValidRequest) {
+    console.debug(Constants.MethodNotAuthorized);
+    return {
+      statusCode: 401,
+      headers: populateCorsHeaders(),
+      body: JSON.stringify({ error: Constants.MethodNotAuthorized }),
+    };
+  }
   if (event.httpMethod !== "POST") {
-    console.error("Method Not Allowed");
+    console.debug(Constants.MethodNotAllowed);
     return {
       statusCode: 405,
       headers: populateCorsHeaders(),
-      body: JSON.stringify({ error: "Method Not Allowed" }),
+      body: JSON.stringify({ error: Constants.MethodNotAllowed }),
     };
   }
 
   try {
-    const API_KEY = process.env.ESIGN_ADMIN_KEY;
+    const EsignAdminKey = process.env.ESIGN_ADMIN_KEY;
     const { uuid, doc_name, userId, additional_senders, fields } = JSON.parse(
       event.body,
     );
 
     if (!userId || !uuid || !doc_name || Array.isArray(fields)) {
-      console.error("Invalid request parameters");
+      console.debug(Constants.MissingRequiredFields);
       return {
         statusCode: 400,
         headers: populateCorsHeaders(),
-        body: JSON.stringify({ error: "Invalid request parameters" }),
+        body: JSON.stringify({ error: Constants.MissingRequiredFields }),
       };
     }
 
@@ -73,35 +84,38 @@ export const handler = async (event) => {
     const uploadRes = await fetch(GoodSignTemplateToEsignUrl, {
       method: "POST",
       headers: {
-        authorization: `Bearer ${API_KEY}`,
+        authorization: `Bearer ${EsignAdminKey}`,
         "content-type": "application/json",
         accept: "application/json",
       },
       body: JSON.stringify(draftPayload),
     });
 
-    const rawText = await uploadRes.text();
+    const draftText = await uploadRes.text();
 
     if (!uploadRes.ok) {
-      console.error("Goodsign error:", rawText);
+      console.debug(
+        "failed to convert template to esign document. details ",
+        draftText,
+      );
       return {
         statusCode: uploadRes.status,
         headers: populateCorsHeaders(),
-        body: rawText,
+        body: draftText,
       };
     }
 
     let signingRequest;
     try {
+      console.debug(Constants.ARPSCreateSigningRequestInitializedMessage);
       signingRequest = JSON.parse(rawText);
     } catch {
-      throw new Error("Goodsign returned invalid JSON");
+      console.debug(Constants.EsignParsingDataErrorMessage);
+      throw new Error(Constants.EsignParsingDataErrorMessage);
     }
 
-    console.debug(
-      "Created signing request successfully:",
-      signingRequest.doc.uuid,
-    );
+    const signingRequestId = signingRequest?.doc?.uuid;
+    console.debug(Constants.EsignCreateSigingRequestMessage, signingRequestId);
 
     return {
       statusCode: 200,
@@ -109,7 +123,10 @@ export const handler = async (event) => {
       body: JSON.stringify(signingRequest),
     };
   } catch (err) {
-    console.error("Internal server exception:", err);
+    console.error(
+      "failed to convert template to esign document. details ",
+      err,
+    );
     return {
       statusCode: 500,
       headers: populateCorsHeaders(),

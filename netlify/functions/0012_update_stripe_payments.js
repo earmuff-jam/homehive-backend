@@ -1,38 +1,35 @@
 /**
  * File : 0012_update_stripe_payments.js
  *
- * This file is used to update the database with new stripe payment information once the payment has been completed. This is an automatic process that uses the webhook workflow to update the firestore database
+ * This file is used to update the database with new stripe payment
+ * information once the payment has been completed. This is an
+ * automatic process that uses the webhook workflow to update
+ * the firestore database
  *
  * Must have feature flags enabled for this feature.
  */
+import { Constants } from "./utils/constants";
 import { initializeFirebase, populateCorsHeaders } from "./utils/utils";
 
 const isDevEnv = process.env.DEV_ENV;
 const AdminAuthorizedKey = process.env.ADMIN_KEY;
 
-/**
- * handler fn ...
- *
- * used to retrieve rental payments and associated property. Function
- * attempts to send email to associated rentees if exists.
- *
- * if the "createdBy" column exists, we assume that the webhook request
- * contained metadata which needs to be stored and processed differently.
- * this allows us to have idempotency over rental payments that are marked
- * as complete vs payments that are not fully completed.
- *
- * @param {Object} event - the event payload to be processed.
- */
+// defines a function used to retrieve rental payments and associated property data.
+// also sends email to associated rentees if applicable.
+// if the "createdBy" column exists, we assume that the webhook request
+// contained metadata which needs to be stored and processed differently.
+// this allows us to have idempotency over rental payments that are marked
+// as complete vs payments that are not fully completed.
 export const handler = async (event) => {
   if (!isDevEnv && event.queryStringParameters?.key !== AdminAuthorizedKey) {
-    console.error("problem fetching required token");
+    console.error(Constants.MethodNotAuthorized);
     return {
       statusCode: 401,
       headers: {
         ...populateCorsHeaders(),
         "Content-Type": "application/json",
       },
-      body: "Unauthorized",
+      body: Constants.MethodNotAuthorized,
     };
   }
 
@@ -41,8 +38,10 @@ export const handler = async (event) => {
     const containsMetadata = Boolean(data?.createdBy);
 
     let draftCollection = "rentalPayments";
+    console.debug(Constants.ARPSRentalPaymentsDbDuringUpdateStripePayment);
     if (containsMetadata) {
       draftCollection = "rents";
+      console.debug(Constants.ARPSRentsDbDuringUpdateStripePayment);
     }
 
     const db = initializeFirebase(isDevEnv);
@@ -53,6 +52,7 @@ export const handler = async (event) => {
 
     // send email for payment notification from clients
     if (containsMetadata) {
+      console.debug(Constants.ARPSMetadataFoundMessage);
       const subject = "Notification of payment attached.";
       const text = `
       Hi there,
@@ -106,10 +106,14 @@ export const handler = async (event) => {
       body: JSON.stringify({ success: true, id: docRef.id }),
     };
   } catch (err) {
-    console.error(
-      "error updating the database with rent details from webhook handler. ",
-      err,
-    );
-    throw err;
+    console.error(Constants.ARPSWebhookHandlerFailed, err);
+    return {
+      statusCode: 500,
+      headers: {
+        ...populateCorsHeaders(),
+        "Content-Type": "application/json",
+      },
+      body: Constants.ARPSWebhookHandlerFailed,
+    };
   }
 };

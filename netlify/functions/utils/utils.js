@@ -3,6 +3,9 @@ import fs from "fs";
 import path from "path";
 import { rgb } from "pdf-lib";
 
+const isDevEnv = process.env.DEV_ENV;
+const IntegrationApiKey = process.env.INTEGRATION_KEY;
+
 const EsignBaseUrl = "https://api.firma.dev/functions/v1/signing-request-api";
 const GoodSignBaseUrl = "https://goodsign.io/api";
 
@@ -271,6 +274,14 @@ export const populateCorsHeaders = () => {
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
   };
+};
+
+// validateRequest ...
+// defines a function that is used to validate a request
+export const validateRequest = (apiKey = "") => {
+  if (isDevEnv) return true;
+  if (!isDevEnv && apiKey === IntegrationApiKey) return true;
+  return false;
 };
 
 // populateApiFields ...

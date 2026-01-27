@@ -8,27 +8,35 @@
  *
  * Must have feature flags enabled for this feature.
  */
-import { GoodSignTemplatesUrl, populateCorsHeaders } from "./utils/utils";
+import { Constants } from "./utils/constants";
+import {
+  GoodSignTemplatesUrl,
+  populateCorsHeaders,
+  validateRequest,
+} from "./utils/utils";
 
-/**
- * handler fn
- *
- * handler fn to fetch the current status of the esign
- *
- * @param {Object} event - The event payload passed
- */
 export const handler = async (event) => {
-  if (event.httpMethod !== "POST") {
+  const isValidRequest = validateRequest(event.headers["x-api-key"]);
+  if (!isValidRequest) {
+    console.debug(Constants.MethodNotAuthorized);
+    return {
+      statusCode: 401,
+      headers: populateCorsHeaders(),
+      body: JSON.stringify({ error: Constants.MethodNotAuthorized }),
+    };
+  }
+
+  if (("POST" || "OPTIONS") !== event.httpMethod) {
+    console.debug(Constants.MethodNotAllowed);
     return {
       statusCode: 405,
       headers: populateCorsHeaders(),
-      body: "Method Not Allowed",
+      body: JSON.stringify({ error: Constants.MethodNotAllowed }),
     };
   }
 
   try {
     const AdminKey = process.env.ESIGN_ADMIN_KEY;
-
     const response = await fetch(GoodSignTemplatesUrl, {
       method: "GET",
       headers: {
@@ -37,9 +45,10 @@ export const handler = async (event) => {
     });
 
     if (!response.ok) {
+      console.debug(Constants.InvalidRequest);
       return {
         statusCode: 500,
-        body: JSON.stringify({ error: "Invalid Request." }),
+        body: JSON.stringify({ error: Constants.InvalidRequest }),
       };
     }
 
@@ -52,7 +61,7 @@ export const handler = async (event) => {
       }),
     };
   } catch (err) {
-    console.error("Unable to fetch templates. Error: ", err);
+    console.error("failed to fetch esign templates. details ", err);
     return {
       statusCode: 500,
       body: JSON.stringify({ error: err.message }),

@@ -21,19 +21,31 @@ export const Constants = {
     "Failed to update database with details from webhook handler",
   ARPSCreateSigningRequestInitializedMessage:
     "Attempting to create signing request",
+  ARPSUpdatedEsignRequest: "Updated esign request",
+
   EsignCreateSigingRequestMessage: "Esign signing request created",
   EsignParsingDataErrorMessage: "Error during parsing of signing request",
+  EsignWebhookReceivedMessage: "Received payload from Esign provider ",
+  EsignWebhookErrorMessage:
+    "Error during webhook response from Esign provider ",
+  EsignMissingPayloadFromWebhookMessage:
+    "Invalid webhook request. Missing payload from provided request",
+
   MethodNotAllowed: "Method not allowed",
   MethodNotAuthorized: "Method not authorized",
   MissingRequiredFields: "Missing required fields",
   MissingPaymentIntentFromStripe: "Invalid payment intent from stripe",
   MissingOrInvalidPaymentIntentFromStripe:
     "Missing payment intent or invalid payment intent status from stripe",
+
   PaymentRecievedYetToProcess:
     "Payment recieved, but has not been completed yet from stripe",
+
   StripePaymentStatusCompleted: "paid",
   StripePaymentStatusManualStatus: "manual",
   StripePaymentIntentStatusCompleted: "succeeded",
-  InvalidRequest: "Invalid request detected.",
+
+  InvalidRequest: "Invalid request detected",
+
   UnknownErrorOccured: "An error occured while processing this request",
 };

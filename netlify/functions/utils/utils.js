@@ -279,7 +279,7 @@ export const populateCorsHeaders = () => {
 // validateRequest ...
 // defines a function that is used to validate a request
 export const validateRequest = (apiKey = "") => {
-  if (isDevEnv) return true;
+  if (isDevEnv === "true") return true;
   if (!isDevEnv && apiKey === IntegrationApiKey) return true;
   return false;
 };

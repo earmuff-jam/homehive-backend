@@ -2,14 +2,12 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Debug Netlify Functions",
+      "name": "Debug Netlify Functions (Linux)",
       "type": "node",
       "request": "launch",
-      "runtimeExecutable": "npx",
-      "runtimeArgs": ["netlify", "dev", "--port", "4225"],
-      "env": {
-        "NODE_OPTIONS": "--inspect=9229"
-      },
+      "runtimeExecutable": "/home/ak47/.nvm/versions/node/v25.5.0/bin/node",
+      "program": "/home/ak47/.nvm/versions/node/v25.5.0/lib/node_modules/netlify-cli/bin/run",
+      "args": ["dev", "--port", "4225"],
       "console": "integratedTerminal",
       "skipFiles": ["<node_internals>/**"]
     }

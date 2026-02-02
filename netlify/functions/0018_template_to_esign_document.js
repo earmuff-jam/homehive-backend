@@ -10,11 +10,14 @@ import {
   DocumentThreePageSchema,
   DocumentTwoPageSchema,
   GoodSignTemplateToEsignUrl,
+  initializeFirebase,
   populateApiFields,
   populateCorsHeaders,
   populateSignerFields,
   validateRequest,
 } from "./utils/utils";
+
+const isDevEnv = process.env.DEV_ENV === "true";
 
 export const handler = async (event) => {
   const isValidRequest = validateRequest(event.headers["x-api-key"]);
@@ -37,11 +40,24 @@ export const handler = async (event) => {
 
   try {
     const EsignAdminKey = process.env.ESIGN_ADMIN_KEY;
-    const { uuid, doc_name, userId, additional_senders, fields } = JSON.parse(
-      event.body,
-    );
+    const {
+      uuid,
+      doc_name,
+      userId,
+      additional_senders,
+      propertyId,
+      primaryTenantId,
+      fields,
+    } = JSON.parse(event.body);
 
-    if (!userId || !uuid || !doc_name || Array.isArray(fields)) {
+    if (
+      !userId ||
+      !uuid ||
+      !doc_name ||
+      !propertyId ||
+      !primaryTenantId ||
+      Array.isArray(fields)
+    ) {
       console.debug(Constants.MissingRequiredFields);
       return {
         statusCode: 400,
@@ -70,8 +86,11 @@ export const handler = async (event) => {
       uuid: uuid,
       doc_name: doc_name,
       attachment_names_in_order: [],
-      metadata: ["placeholder"],
-      webhook: "", // TODO: netlify function that can handle a simple payload
+      metadata: [
+        { propertyId: propertyId },
+        { primaryTenantId: primaryTenantId },
+      ],
+      webhook: `${process.env.SITE_URL}/.netlify/functions/0020_fetch_goodsign_webhook`,
       cc_email: additional_senders,
       smsverify: false,
       send_in_order: false,
@@ -115,7 +134,22 @@ export const handler = async (event) => {
     }
 
     const signingRequestId = signingRequest?.doc?.uuid;
-    console.debug(Constants.EsignCreateSigingRequestMessage, signingRequestId);
+    const signingRequestStatus = signingRequest?.doc?.status;
+    console.debug(
+      Constants.EsignCreateSigingRequestMessage,
+      signingRequestId,
+      signingRequestStatus,
+    );
+
+    const esignDocumentRequest = {
+      signingRequestId,
+      signingRequestStatus,
+      propertyId,
+      userId,
+      primaryTenantId,
+    };
+
+    updateEsignDocumentStatus(esignDocumentRequest);
 
     return {
       statusCode: 200,
@@ -133,4 +167,28 @@ export const handler = async (event) => {
       body: JSON.stringify({ error: err.message }),
     };
   }
+};
+
+// updateEsignDocumentStatus ...
+// defines a function that peforms update after a document is requested to be signed
+const updateEsignDocumentStatus = async (req) => {
+  if (!req.signingRequestId || !req.propertyId) {
+    console.debug(Constants.MissingRequiredFields);
+    throw new Error(Constants.MissingRequiredFields);
+  }
+
+  const db = initializeFirebase(isDevEnv);
+  const createdDocumentsRef = doc(db, "createdDocuments", req.signingRequestId);
+  const updatedSigingRequestDetails = {
+    ...req,
+    signingRequestCreatedOn: dayjs(),
+  };
+
+  console.debug(Constants.ARPSUpdatedEsignRequest);
+  await setDoc(
+    createdDocumentsRef,
+    { updatedSigingRequestDetails },
+    { merge: true },
+  );
+  return;
 };

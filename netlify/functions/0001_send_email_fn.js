@@ -42,7 +42,14 @@ export const handler = async (event) => {
   }
 
   try {
-    const { to, subject, text, html } = JSON.parse(event.body);
+    const {
+      to,
+      subject,
+      text,
+      html,
+      ccEmailIds = [],
+      bccEmailIds = [],
+    } = JSON.parse(event.body);
 
     if (!to || !subject || !text) {
       console.debug(Constants.MissingRequiredFields);
@@ -57,9 +64,25 @@ export const handler = async (event) => {
 
     const recipients = [new Recipient(to)];
 
+    let ccRecipients = [];
+    ccEmailIds.forEach((ccEmailId) => {
+      if (ccEmailId) {
+        ccRecipients.push(new Recipient(ccEmailId));
+      }
+    });
+
+    let bccRecipients = [];
+    bccEmailIds.forEach((bccEmailId) => {
+      if (bccEmailId) {
+        bccRecipients.push(new Recipient(bccEmailId));
+      }
+    });
+
     const emailParams = new EmailParams()
       .setFrom(sentFrom)
       .setTo(recipients)
+      .setCc(ccRecipients)
+      .setBcc(bccRecipients)
       .setSubject(subject);
 
     if (text) emailParams.setText(text);

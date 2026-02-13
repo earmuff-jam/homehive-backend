@@ -3,7 +3,7 @@ import fs from "fs";
 import path from "path";
 import { rgb } from "pdf-lib";
 
-const isDevEnv = process.env.DEV_ENV;
+const isDevEnv = process.env.IS_DEV_ENV === "true";
 const IntegrationApiKey = process.env.INTEGRATION_KEY;
 
 const EsignBaseUrl = "https://api.firma.dev/functions/v1/signing-request-api";

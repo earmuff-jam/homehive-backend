@@ -10,6 +10,15 @@
       "args": ["dev", "--port", "4225"],
       "console": "integratedTerminal",
       "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug App",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "node --inspect $(command -v netlify) dev"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen"
     }
   ]
 }

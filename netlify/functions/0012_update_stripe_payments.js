@@ -13,6 +13,7 @@ import { initializeFirebase, populateCorsHeaders } from "./utils/utils";
 
 const isDevEnv = process.env.DEV_ENV;
 const AdminAuthorizedKey = process.env.ADMIN_KEY;
+const IntegrationKey = process.env.INTEGRATION_KEY;
 
 // defines a function used to retrieve rental payments and associated property data.
 // also sends email to associated rentees if applicable.
@@ -79,10 +80,11 @@ export const handler = async (event) => {
           method: "POST",
           headers: {
             ...populateCorsHeaders(),
+            "x-api-key": IntegrationKey,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            to: data?.customer_email,
+            to: data?.tenantEmail,
             subject,
             text,
           }),

@@ -1,35 +1,46 @@
 /**
  * File : 0004_fetch_stripe_account_status.js
- *
  * This file is used to verify a users account status in stripe
- *
  * Must have feature flags enabled for this feature.
  */
-import { populateCorsHeaders } from "./utils/utils";
+import { Constants } from "./utils/constants";
+import { populateCorsHeaders, validateRequest } from "./utils/utils";
 import Stripe from "stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: process.env.STRIPE_API_VERSION,
 });
 
-/**
- * handler fn
- *
- * handler fn to retrieve account details from stripe
- *
- * @param {Object} event - The event payload passed
- */
 export const handler = async (event) => {
+  const isValidRequest = validateRequest(event.headers["x-api-key"]);
+  if (!isValidRequest) {
+    console.debug(Constants.MethodNotAuthorized);
+    return {
+      statusCode: 401,
+      headers: populateCorsHeaders(),
+      body: JSON.stringify({ error: Constants.MethodNotAuthorized }),
+    };
+  }
+
   if (event.httpMethod !== "POST") {
+    console.debug(Constants.MethodNotAllowed);
     return {
       statusCode: 405,
       headers: populateCorsHeaders(),
-      body: "Method Not Allowed",
+      body: JSON.stringify({ error: Constants.MethodNotAllowed }),
     };
   }
 
   try {
     const { accountId } = JSON.parse(event.body);
+    if (!accountId) {
+      console.debug(Constants.MissingRequiredFields);
+      return {
+        statusCode: 401,
+        headers: populateCorsHeaders(),
+        body: JSON.stringify({ error: Constants.MissingRequiredFields }),
+      };
+    }
     const account = await stripe.accounts.retrieve(accountId, {
       expand: ["external_accounts"],
     });
@@ -65,6 +76,7 @@ export const handler = async (event) => {
       }),
     };
   } catch (error) {
+    console.debug("failed to link stripe account. details ", error);
     return {
       statusCode: 400,
       headers: populateCorsHeaders(),

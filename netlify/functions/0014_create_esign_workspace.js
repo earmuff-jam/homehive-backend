@@ -1,64 +1,73 @@
-/**
- * File : 0014_create_esign_workspace.js
- *
- * This file is used to create workspace for each user.
- *
- * Must have feature flags enabled for this feature.
- */
-import { EsignWorkspaceUrl, populateCorsHeaders } from "./utils/utils";
+// /**
+//  * File : 0014_create_esign_workspace.js
+//  * This file is used to create workspace for each user.
+//  * Must have feature flags enabled for this feature.
+//  */
+// import { Constants } from "./utils/constants";
+// import {
+//   EsignWorkspaceUrl,
+//   populateCorsHeaders,
+//   validateRequest,
+// } from "./utils/utils";
 
-/**
- * handler fn
- *
- * handler fn to fetch the current status of the esign
- *
- * @param {Object} event - The event payload passed
- */
-export const handler = async (event) => {
-  if (event.httpMethod !== "POST") {
-    return {
-      statusCode: 405,
-      headers: populateCorsHeaders(),
-      body: "Method Not Allowed",
-    };
-  }
+// export const handler = async (event) => {
+//   const isValidRequest = validateRequest(event.headers["x-api-key"]);
+//   if (!isValidRequest) {
+//     console.debug(Constants.MethodNotAuthorized);
+//     return {
+//       statusCode: 401,
+//       headers: populateCorsHeaders(),
+//       body: JSON.stringify({ error: Constants.MethodNotAuthorized }),
+//     };
+//   }
 
-  try {
-    const AdminKey = process.env.ESIGN_ADMIN_KEY;
-    const { workspaceId } = JSON.parse(event.body);
+//   if (("POST" || "OPTIONS") !== event.httpMethod) {
+//     console.debug(Constants.MethodNotAllowed);
+//     return {
+//       statusCode: 405,
+//       headers: populateCorsHeaders(),
+//       body: JSON.stringify({ error: Constants.MethodNotAllowed }),
+//     };
+//   }
 
-    const response = await fetch(EsignWorkspaceUrl, {
-      method: "POST",
-      headers: {
-        Authorization: AdminKey,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        name: workspaceId,
-      }),
-    });
+//   try {
+//     const AdminKey = process.env.ESIGN_ADMIN_KEY;
+//     const { workspaceId } = JSON.parse(event.body);
 
-    if (!response.ok) {
-      return {
-        statusCode: 500,
-        body: JSON.stringify({ error: "Invalid Request." }),
-      };
-    }
+//     const response = await fetch(EsignWorkspaceUrl, {
+//       method: "POST",
+//       headers: {
+//         Authorization: AdminKey,
+//         "Content-Type": "application/json",
+//       },
+//       body: JSON.stringify({
+//         name: workspaceId,
+//       }),
+//     });
 
-    const workspace = await response.json();
-    return {
-      statusCode: 200,
-      body: JSON.stringify({
-        message: "Workspace created successfully",
-        workspaceId: workspace.id,
-        name: workspace.name,
-        createdAt: workspace.created_date,
-      }),
-    };
-  } catch (err) {
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: err.message }),
-    };
-  }
-};
+//     if (!response.ok) {
+//       console.debug(Constants.InvalidRequest);
+//       return {
+//         statusCode: 500,
+//         body: JSON.stringify({ error: Constants.InvalidRequest }),
+//       };
+//     }
+
+//     const workspace = await response.json();
+//     return {
+//       statusCode: 200,
+//       body: JSON.stringify({
+//         message: "Workspace created successfully",
+//         workspaceId: workspace.id,
+//         name: workspace.name,
+//         createdAt: workspace.created_date,
+//       }),
+//     };
+//   } catch (err) {
+//     console.debug("failed to create esign workspace. details ", err);
+//     return {
+//       statusCode: 500,
+//       body: JSON.stringify({ error: err.message }),
+//     };
+//   }
+// };

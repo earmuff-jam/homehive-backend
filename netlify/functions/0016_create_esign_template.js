@@ -1,27 +1,33 @@
 /**
  * File : 0016_create_esign_template.js
- *
  * This file is used to create a new esign template for a selected user.
- *
  * Must have feature flags enabled for this feature.
  */
 import dayjs from "dayjs";
 
-import { EsignTemplatesUrl, populateCorsHeaders } from "./utils/utils";
+import { Constants } from "./utils/constants";
+import {
+  EsignTemplatesUrl,
+  populateCorsHeaders,
+  validateRequest,
+} from "./utils/utils";
 
-/**
- * handler fn
- *
- * handler fn to fetch the current status of the esign
- *
- * @param {Object} event - The event payload passed
- */
 export const handler = async (event) => {
+  const isValidRequest = validateRequest(event.headers["x-api-key"]);
+  if (!isValidRequest) {
+    console.debug(Constants.MethodNotAuthorized);
+    return {
+      statusCode: 401,
+      headers: populateCorsHeaders(),
+      body: JSON.stringify({ error: Constants.MethodNotAuthorized }),
+    };
+  }
   if (event.httpMethod !== "POST") {
+    console.debug(Constants.MethodNotAllowed);
     return {
       statusCode: 405,
       headers: populateCorsHeaders(),
-      body: "Method Not Allowed",
+      body: JSON.stringify({ error: Constants.MethodNotAllowed }),
     };
   }
 
@@ -32,12 +38,11 @@ export const handler = async (event) => {
     const { userId, fileName, fileType, fileData } = body;
 
     if (!userId || !fileName || !fileType || !fileData) {
+      console.debug(Constants.InvalidRequest);
       return {
         statusCode: 400,
         headers: populateCorsHeaders(),
-        body: JSON.stringify({
-          error: "Invalid request parameters.",
-        }),
+        body: JSON.stringify({ error: Constants.InvalidRequest }),
       };
     }
 
@@ -60,13 +65,13 @@ export const handler = async (event) => {
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Internal Service Exception. Details: ", errorText);
+      const errorMessage = await response.text();
+      console.debug("failed to create esign template ", errorMessage);
 
       return {
         statusCode: response.status,
         headers: populateCorsHeaders(),
-        body: errorText,
+        body: errorMessage,
       };
     }
 
@@ -84,8 +89,7 @@ export const handler = async (event) => {
       }),
     };
   } catch (err) {
-    console.error("Unable to create esign template. Error: ", err);
-
+    console.debug("Unable to create esign template. Error: ", err);
     return {
       statusCode: 500,
       headers: populateCorsHeaders(),

@@ -35,8 +35,8 @@ export const handler = async (event) => {
     };
   }
 
-  // handle charge code associations
-  updateStripePaymentHandler(stripeEvent?.type, stripeEvent?.data?.object);
+  // handle payment charge code associations
+  handlePaymentChargeCodes(stripeEvent?.type, stripeEvent?.data?.object);
 
   return {
     statusCode: 200,
@@ -45,16 +45,10 @@ export const handler = async (event) => {
   };
 };
 
-/**
- * updateStripePaymentHandler ...
- *
- * function used to update stripe payment services based on various associations
- * made by stripe payment services.
- *
- * @param {string} stripeEventType - the type of event that we need to process.
- * @param {Object} eventDetails - the event details object
- */
-const updateStripePaymentHandler = (stripeEventType, eventDetails) => {
+// handlePaymentChargeCodes ...
+// defines a function that is used to update stripe payment services
+// based on various associations made by stripe payment services.
+const handlePaymentChargeCodes = (stripeEventType, eventDetails) => {
   switch (stripeEventType) {
     // Payment Intents
     case "payment_intent.created":

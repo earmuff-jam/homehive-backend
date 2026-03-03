@@ -1,9 +1,10 @@
+import { Constants } from "./constants";
 import admin from "firebase-admin";
 import fs from "fs";
 import path from "path";
 import { rgb } from "pdf-lib";
 
-const isDevEnv = process.env.IS_DEV_ENV === "true";
+const isDevEnv = process.env.DEV_ENV === "true";
 const IntegrationApiKey = process.env.INTEGRATION_KEY;
 
 const EsignBaseUrl = "https://api.firma.dev/functions/v1/signing-request-api";
@@ -279,7 +280,7 @@ export const populateCorsHeaders = () => {
 // validateRequest ...
 // defines a function that is used to validate a request
 export const validateRequest = (apiKey = "") => {
-  if (isDevEnv === "true") return true;
+  if (isDevEnv) return true;
   if (!isDevEnv && apiKey === IntegrationApiKey) return true;
   return false;
 };
@@ -396,3 +397,56 @@ export const DefaultInvoiceStatusOptions = [
     borderColor: rgb(1, 1, 1),
   },
 ];
+
+// RentAppSubscriptionStatusEnumValues ...
+// defines Enum values that represent Subscription Status
+//
+export const RentAppSubscriptionStatusEnumValues = {
+  SubscriptionInit: "created", // initialized, payment not made
+  SubscriptionActive: "active", // active, g2g
+  SubscriptionPastDue: "past_due", // active, payment due
+  SubscriptionPaymentComplete: "completed", // inactive, but payment made; happens for bank transfer
+};
+
+// generateSubscriptionMessageNotification ...
+// defines a function that generates subscription message notification
+export const generateSubscriptionMessageNotification = (
+  productName,
+  productCost,
+) => {
+  if (!productName || !productCost) {
+    console.debug(Constants.MissingRequiredFields);
+    return {
+      subject: "",
+      text: "",
+    };
+  }
+
+  const draftText = `
+  Hi there,
+  
+  Attached is your notification of payment for Rent App with Earmuffjam LLC. 
+  
+  Please ensure that all information is valid and correct.
+
+  Subscription Term: ${productName}
+  Subscription Cost (per month): $${productCost}
+
+  Please note that some transaction take couple of days to process fully.
+
+  Thank you,
+  
+  This is an auto-generated email. Please do not reply to this email.
+  `;
+
+  return {
+    subject: "Subscription Notification for Rent App",
+    text: draftText,
+  };
+};
+
+// sanitizeApiFields ...
+// defines a function that removes all null or undefined values from an object
+export const sanitizeApiFields = (obj = {}) =>
+  /* eslint-disable no-unused-vars */
+  Object.fromEntries(Object.entries(obj).filter(([_, value]) => value != null));

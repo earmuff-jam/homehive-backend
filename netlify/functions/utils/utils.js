@@ -405,7 +405,9 @@ export const RentAppSubscriptionStatusEnumValues = {
   SubscriptionInit: "created", // initialized, payment not made
   SubscriptionActive: "active", // active, g2g
   SubscriptionPastDue: "past_due", // active, payment due
+  SubscriptionPaymentUpdateIssued: "update_issued", // active payment, customer attempted to change payment
   SubscriptionPaymentComplete: "completed", // inactive, but payment made; happens for bank transfer
+  SubscriptionCancelled: "cancelled", // customer no longer requires / wants subscription
 };
 
 // generateSubscriptionMessageNotification ...

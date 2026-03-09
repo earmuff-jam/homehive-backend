@@ -47,8 +47,11 @@ export const Constants = {
     "Processing creating stripe customer link for provided email address",
 
   // Subscription Related Messages
+  SubscriptionDetailsUpdatedSuccessMsg: "Successfully updated customer subscription details",
   SubscriptionCreatedSuccessMsg:
     "Successfully created new customer for subscription",
+  SubscriptionUpdatedSuccessMsg:
+    "Successfully updated customer billing for subscription",
   SubscriptionPaymentSuccessMsg:
     "Invoice payment completed successfully. Activating Subscription",
   SubscriptionCheckoutSuccessMsg:
@@ -57,7 +60,6 @@ export const Constants = {
   SubscriptionNotificationSuccessMsg: "Unable to send email notification",
   SubscriptionNotificationFailureErrorMsg: "Unable to send email notification",
   SubscriptionFailureMessage: "Unable to update user subscription",
-  
 
   // Common Error Messages
   MethodNotAllowed: "Method not allowed",

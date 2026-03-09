@@ -52,6 +52,7 @@ export const handler = async (event) => {
 // defines a function that is used to handle subscription event
 // created subscription identifies as intent to subscribe with payment
 const handleSubscriptionChargeCodes = async (type, data) => {
+  console.log(data, type);
   switch (type) {
     case "customer.subscription.created":
       console.debug(Constants.SubscriptionCreatedSuccessMsg);
@@ -67,6 +68,47 @@ const handleSubscriptionChargeCodes = async (type, data) => {
         createdOn: dayjs().toISOString(),
       });
       return;
+
+    case "customer.subscription.updated":
+      // stripeInvoiceId and stripeCustomerEmail here are not present. this is
+      // by stripe design. does not affect structural change for subscription handler
+      // no subscriptionStatus enum value since we retain validity till payment completion
+      console.debug(Constants.SubscriptionUpdatedSuccessMsg);
+
+      const subsItem = data?.items.data[0];
+      const isUserAttemptingToCancelSubscription =
+        Boolean(data?.cancel_at) ||
+        Boolean(data?.cancel_at_period_end) ||
+        Boolean(data?.canceled_at);
+
+      if (isUserAttemptingToCancelSubscription) {
+        console.debug(
+          "Cancelling subscription per user request at ",
+          dayjs().toISOString(),
+        );
+
+        updateDb(type, {
+          stripeSubscriptionId: data?.id,
+          subscriptionAmount: subsItem?.plan?.amount,
+          subscriptionStatus:
+            RentAppSubscriptionStatusEnumValues.SubscriptionCancelled,
+          stripeLatestInvoiceId: data?.latest_invoice, // displays the last invoice
+          stripeCustomerId: data.customer,
+          markedDeletedOn: dayjs().toISOString(),
+          updatedOn: dayjs().toISOString(),
+        });
+
+        return;
+      } else {
+        console.debug(Constants.SubscriptionDetailsUpdatedSuccessMsg);
+        updateDb(type, {
+          stripeSubscriptionId: data?.id,
+          subscriptionAmount: data?.plan?.amount,
+          stripeCustomerId: data.customer,
+          updatedOn: dayjs().toISOString(),
+        });
+        return;
+      }
 
     case "invoice.payment_succeeded":
       // only webhook that can setup stripe subscription; suggested by Stripe

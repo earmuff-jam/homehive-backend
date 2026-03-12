@@ -121,6 +121,7 @@ const handleSubscriptionChargeCodes = async (type, data) => {
         stripeCustomerId: data.customer,
         stripeCustomerEmail: data.customer_email,
         updatedOn: dayjs().toISOString(),
+        updateExtraCollection: ["users"], // server representation of additional tables to update
       });
       break;
 

@@ -7,6 +7,7 @@
  */
 import { Constants } from "./utils/constants";
 import {
+  Role,
   generateSubscriptionMessageNotification,
   initializeFirebase,
   populateCorsHeaders,
@@ -58,9 +59,10 @@ export const handler = async (event) => {
     const sanitizedSubscriptionData = sanitizeApiFields(draftSubscriptionData);
 
     const db = initializeFirebase(isDevEnv);
-    const containsMetadata =
-      sanitizedSubscriptionData?.stripeEventType ===
-      "checkout.session.completed";
+    const shouldPublishEmailNotification = isDevEnv
+      ? false
+      : sanitizedSubscriptionData?.stripeEventType ===
+        "checkout.session.completed";
 
     const docRef = db
       .collection("subscriptionPayments")
@@ -68,7 +70,31 @@ export const handler = async (event) => {
 
     await docRef.set(sanitizedSubscriptionData, { merge: true });
 
-    if (containsMetadata) {
+    // only update other collections if valid email and db is present
+    if (data?.stripeCustomerEmail && data?.updateExtraCollection?.length > 0) {
+      console.debug("Updating extra collections because of relevant changes.");
+      const usersRef = db.collection("users");
+      const snapshot = await usersRef
+        .where("email", "==", data?.stripeCustomerEmail)
+        .limit(1)
+        .get();
+
+      if (!snapshot.empty) {
+        console.debug(
+          "Found existing user with provided email. Updating user access",
+        );
+        const userDoc = snapshot.docs[0];
+        const userData = userDoc.data();
+
+        if (userData.role !== Role.Owner) {
+          // update ROLE if user has valid subscription for property
+          await userDoc.ref.update({ role: Role.Owner });
+          console.debug("Updated existing user with proper user access.");
+        }
+      }
+    }
+
+    if (shouldPublishEmailNotification) {
       // send email notification here
       const { subject, text } = generateSubscriptionMessageNotification(
         sanitizedSubscriptionData?.subscriptionProductName,

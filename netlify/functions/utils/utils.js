@@ -23,6 +23,15 @@ export const GoodSignTemplatesUrl = GoodSignBaseUrl + EsignTemplatesUri;
 export const GoodSignTemplateToEsignUrl =
   GoodSignBaseUrl + GoodSignTemplateToEsignUri;
 
+// Role ...
+// defines the role used by web ui
+export const Role = {
+  User: "USER",
+  Admin: "ADMIN",
+  Owner: "OWNER",
+  Tenant: "TENANT",
+};
+
 export const DocumentOnePageSchema = [
   // ===== PAGE 1 =====
   ["1owner", "string"],

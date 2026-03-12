@@ -250,7 +250,7 @@ export const DocumentThreePageSchema = [
 export const initializeFirebase = (isDevEnv = false) => {
   if (!admin.apps.length) {
     if (isDevEnv) {
-      console.log("Running in developmental instance. ");
+      console.debug("Running in developmental instance. ");
       const serviceAccountPath = path.resolve("./dev/account.json");
       const serviceAccount = JSON.parse(
         fs.readFileSync(serviceAccountPath, "utf8"),

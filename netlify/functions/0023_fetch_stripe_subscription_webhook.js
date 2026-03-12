@@ -52,7 +52,6 @@ export const handler = async (event) => {
 // defines a function that is used to handle subscription event
 // created subscription identifies as intent to subscribe with payment
 const handleSubscriptionChargeCodes = async (type, data) => {
-  console.log(data, type);
   switch (type) {
     case "customer.subscription.created":
       console.debug(Constants.SubscriptionCreatedSuccessMsg);
@@ -148,7 +147,7 @@ const handleSubscriptionChargeCodes = async (type, data) => {
       console.debug(Constants.SubscriptionPaymentErrorMsg);
       updateDb(type, {
         stripeCustomerId: data.customer,
-        stripeSubscriptionId: invoice.subscription,
+        stripeSubscriptionId: data.subscription,
         subscriptionStatus:
           RentAppSubscriptionStatusEnumValues.SubscriptionPastDue,
         updatedOn: dayjs().toISOString(),
@@ -157,6 +156,7 @@ const handleSubscriptionChargeCodes = async (type, data) => {
 
     default:
       console.debug("Unhandled event:", type);
+      break;
   }
 };
 

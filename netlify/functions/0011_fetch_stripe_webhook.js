@@ -155,7 +155,7 @@ const handlePaymentChargeCodes = (stripeEventType, eventDetails) => {
     // Default
     default:
       /* eslint-disable no-console */
-      console.log("No matching case for event type:", stripeEventType);
+      console.debug("No matching case for event type:", stripeEventType);
       break;
   }
 };

@@ -219,7 +219,7 @@ export const handler = async (event) => {
       isBase64Encoded: true,
     };
   } catch (error) {
-    console.log(error);
+    console.debug(error);
     return {
       statusCode: 500,
       headers: populateCorsHeaders(),

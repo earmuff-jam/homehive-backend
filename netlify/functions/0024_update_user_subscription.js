@@ -61,8 +61,9 @@ export const handler = async (event) => {
     const db = initializeFirebase(isDevEnv);
     const shouldPublishEmailNotification = isDevEnv
       ? false
-      : sanitizedSubscriptionData?.stripeEventType ===
-        "checkout.session.completed";
+      : ["invoice.payment_failed", "checkout.session.completed"].includes(
+          sanitizedSubscriptionData?.stripeEventType,
+        );
 
     const docRef = db
       .collection("subscriptionPayments")
@@ -72,8 +73,12 @@ export const handler = async (event) => {
 
     // only update other collections if valid email and db is present
     if (data?.stripeCustomerEmail && data?.updateExtraCollection?.length > 0) {
-      console.debug("Updating extra collections because of relevant changes.");
-      const usersRef = db.collection("users");
+      const userCollection = data?.updateExtraCollection[0];
+      console.debug(
+        "Updating extra collections because of relevant changes.",
+        userCollection,
+      );
+      const usersRef = db.collection(userCollection);
       const snapshot = await usersRef
         .where("email", "==", data?.stripeCustomerEmail)
         .limit(1)

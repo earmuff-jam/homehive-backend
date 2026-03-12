@@ -117,7 +117,7 @@ const handleSubscriptionChargeCodes = async (type, data) => {
         stripeSubscriptionId: data?.parent?.subscription_details?.subscription,
         subscriptionAmount: data?.total,
         subscriptionStatus: data?.status,
-        stripeInvoiceId: data?.lines?.data[0].invoice, // 1 item per line
+        stripeInvoiceId: data?.lines?.data[0].invoice, // users can only select monthly plan or yearly plan
         stripeCustomerId: data.customer,
         stripeCustomerEmail: data.customer_email,
         updatedOn: dayjs().toISOString(),
@@ -147,9 +147,11 @@ const handleSubscriptionChargeCodes = async (type, data) => {
     case "invoice.payment_failed":
       console.debug(Constants.SubscriptionPaymentErrorMsg);
       updateDb(type, {
+        stripeCustomerId: data.customer,
         stripeSubscriptionId: invoice.subscription,
         subscriptionStatus:
           RentAppSubscriptionStatusEnumValues.SubscriptionPastDue,
+        updatedOn: dayjs().toISOString(),
       });
       break;
 

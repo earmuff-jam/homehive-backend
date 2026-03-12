@@ -2,7 +2,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Debug Netlify Functions (Linux)",
+      "name": "Linux Debug Netlify Functions",
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "/home/ak47/.nvm/versions/node/v25.5.0/bin/node",
@@ -12,13 +12,12 @@
       "skipFiles": ["<node_internals>/**"]
     },
     {
+      "name": "Mac Debug Netlify Functions",
       "type": "node",
       "request": "launch",
-      "name": "Debug App",
       "runtimeExecutable": "bash",
-      "runtimeArgs": ["-c", "node --inspect $(command -v netlify) dev"],
-      "console": "integratedTerminal",
-      "internalConsoleOptions": "neverOpen"
+      "runtimeArgs": ["-c", "node --inspect $(which netlify) dev --port 4225"],
+      "console": "integratedTerminal"
     }
   ]
 }

@@ -461,3 +461,7 @@ export const generateSubscriptionMessageNotification = (
 export const sanitizeApiFields = (obj = {}) =>
   /* eslint-disable no-unused-vars */
   Object.fromEntries(Object.entries(obj).filter(([_, value]) => value != null));
+
+// pickRandom ...
+// defines a function that selects one item at random from a list
+export const pickRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];

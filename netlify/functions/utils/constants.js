@@ -1,6 +1,18 @@
 // Constants ...
 // defines function that is used for global constants
 export const Constants = {
+  // Environment message
+  IsDevEnv: "In development environment instance",
+
+  // Raspy AI related message
+  RaspyUserIntentDetected:
+    "Attempting to retrieve intent for requested message",
+  RaspyOtherIntentDetected:
+    "Found message with other intent. Displaying default message.",
+  RaspyPropertyOverviewIntentDetected:
+    "Found message with intent related to property overview.",
+  RaspyErrorMessage: "Unable to fetch requested information from Raspy. ",
+
   // ARPS releted messages
   ARPSMissingRequiredFields: "Missing fields for selected tenant. Skipping",
   ARPSRentRecordExists: "Found a matching rent record. Skipping",
@@ -47,7 +59,8 @@ export const Constants = {
     "Processing creating stripe customer link for provided email address",
 
   // Subscription Related Messages
-  SubscriptionDetailsUpdatedSuccessMsg: "Successfully updated customer subscription details",
+  SubscriptionDetailsUpdatedSuccessMsg:
+    "Successfully updated customer subscription details",
   SubscriptionCreatedSuccessMsg:
     "Successfully created new customer for subscription",
   SubscriptionUpdatedSuccessMsg:

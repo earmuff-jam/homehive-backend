@@ -1,0 +1,33 @@
+{
+  "portfolioHealth": {
+    "totalProperties": 5,
+    "totalUnits": 12,
+    "occupiedUnits": 9,
+    "vacantUnits": 3,
+    "occupancyRate": 75
+  },
+  "financialInsights": {
+    "expectedMonthlyRevenue": 18000,
+    "collectedRevenue": 15000,
+    "missingRentPayments": 3
+  },
+  "propertyInsights": [
+    {
+      "propertyId": "abc123",
+      "status": "vacant",
+      "summary": "All 4 units currently vacant.",
+      "alerts": ["Property generating no income"]
+    },
+    {
+      "propertyId": "def456",
+      "status": "warning",
+      "summary": "1 tenant late on rent.",
+      "alerts": ["Late payment detected"]
+    }
+  ],
+  "recommendedActions": [
+    "List vacant units for rent",
+    "Follow up with tenants who have unpaid rent",
+    "Verify lease expiration dates"
+  ]
+}

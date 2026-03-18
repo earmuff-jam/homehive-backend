@@ -1,5 +1,5 @@
 /**
- * File : 0002_connect_stripe_account.js
+ * File : 0002_create_stripe_account.js
  * This file is used to connect to a stripe account.
  * Must have feature flags enabled for this feature.
  */

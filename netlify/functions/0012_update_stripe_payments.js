@@ -11,7 +11,7 @@
 import { Constants } from "./utils/constants";
 import { initializeFirebase, populateCorsHeaders } from "./utils/utils";
 
-const isDevEnv = process.env.DEV_ENV;
+const isDevEnv = process.env.DEV_ENV === "true";
 const AdminAuthorizedKey = process.env.ADMIN_KEY;
 const IntegrationKey = process.env.INTEGRATION_KEY;
 

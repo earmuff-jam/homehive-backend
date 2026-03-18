@@ -3,7 +3,7 @@
  *
  * defines schema and parameters for Raspy
  */
-import { RaspyAIResponseSchema } from "./sampleResponse";
+import { RaspyAIDevTestDataset } from "./schemaConfig";
 
 // PropertyOverviewEnumValue ...
 export const PropertyOverviewEnumValue = "PropertyOverview";
@@ -54,7 +54,7 @@ export const GrokModelProps = {
       role: "system",
       content: `You are a property management assistant. Analyze property, tenant, and rent data and produce a useful recap for a property owner. If information is missing, return null. Return response as JSON. Do not guess values. Focus on practical insights for landlords and return a structured response.
     
-      Always follow format defined within ${RaspyAIResponseSchema}. The key intent can be used to know what schema to use.`,
+      Always follow format defined within ${RaspyAIDevTestDataset}. The key intent can be used to know what schema to use.`,
     },
   },
 };

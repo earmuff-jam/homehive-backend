@@ -7,8 +7,8 @@
  * Must have feature flags enabled
  */
 import { Constants } from "./utils/constants";
-import { GrokModelProps } from "./utils/raspy/config";
-import { RaspyAIResponseSchema } from "./utils/raspy/sampleResponse";
+import { GrokModelProps, IntentEnumValues } from "./utils/raspy/config";
+import { RaspyAIResponseSchemaOriginalArgs } from "./utils/raspy/schemaConfig";
 import { populateCorsHeaders, validateRequest } from "./utils/utils";
 import Groq from "groq-sdk";
 
@@ -61,7 +61,7 @@ export const handler = async (event) => {
     // return fake dataset if dev env is present
     if (isDevEnv) {
       console.debug(Constants.IsDevEnv);
-      const selectedResponse = RaspyAIResponseSchema[intent];
+      const selectedResponse = RaspyAIDevTestDataset[intent];
 
       return {
         statusCode: 200,
@@ -75,6 +75,25 @@ export const handler = async (event) => {
       };
     }
 
+    // prevent grok token misuse if intent is different then objective
+    if (intent === IntentEnumValues.Other) {
+      console.debug(Constants.RaspyOtherIntentDetected);
+      return {
+        statusCode: 200,
+        headers: {
+          ...populateCorsHeaders(),
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          // blanket statement; UI should recheck message
+          ...RaspyAIResponseSchemaOriginalArgs,
+        }),
+      };
+    }
+
+    // main schema keys
+    const keys = Object.keys(RaspyAIResponseSchemaOriginalArgs);
+
     const completion = await groq.chat.completions.create({
       model: GrokModelProps.model,
       temperature: GrokModelProps.temperature,
@@ -87,11 +106,14 @@ export const handler = async (event) => {
           role: "user",
           content: `
           Intent: ${intent}
-          Response Schema: ${RaspyAIResponseSchema[intent]}
           User Question: ${message}
           Properties: ${JSON.stringify(properties)}
           Tenants: ${JSON.stringify(tenants)}
-          Rents: ${JSON.stringify(rents)}`,
+          Rents: ${JSON.stringify(rents)}
+          
+          MUST return JSON matching EXACTLY this structure keys:
+          ${JSON.stringify(keys)}
+          `,
         },
       ],
     });

@@ -1,6 +1,35 @@
-// RaspyAIResponseSchema ...
-// defines the default messages for Raspy AI for dev mode this is done to prevent overuse of tokens and to limit the hallucinations of the AI system. The structure for the Raspy Response messages are built in this format.
-export const RaspyAIResponseSchema = {
+// DefaultPortfolioHealthResponseSchema ...
+// defines the response schema for portfolio health
+export const DefaultPortfolioHealthResponseSchema = {
+  totalProperties: 0,
+  vacantProperties: 0,
+  activeProperties: 0,
+};
+
+// DefaultFinancialHealthResponseSchema ...
+// defines the response schema for financial health
+export const DefaultFinancialHealthResponseSchema = {
+  totalMonthlyRentIncome: 0,
+  averageRentalYield: 0,
+  securityDepositsCollected: 0,
+  totalPortfolioValue: 0,
+};
+
+// DefaultRecommendedActionsResponseSchema ...
+// defines the response schema for recommended actions
+export const DefaultRecommendedActionsResponseSchema = [];
+
+// RaspyAIResponseSchemaOriginalArgs ...
+// defines the original args for Raspy AI response schema
+export const RaspyAIResponseSchemaOriginalArgs = {
+  portfolioHealth: DefaultPortfolioHealthResponseSchema,
+  financialHealth: DefaultFinancialHealthResponseSchema,
+  recommendedActions: DefaultRecommendedActionsResponseSchema,
+};
+
+// RaspyAIDevTestDataset ...
+// defines the default messages for Raspy AI for dev mode this is done to prevent overuse of tokens and to limit the hallucinations of the AI system. The structure for the Raspy Response messages are built in this format as well.
+export const RaspyAIDevTestDataset = {
   PropertyOverview: {
     portfolioHealth: {
       totalProperties: 1,
@@ -9,9 +38,9 @@ export const RaspyAIResponseSchema = {
     },
     financialHealth: {
       totalMonthlyRentIncome: 0,
-      averageRentalYield: null, // TODO: CAN RASPY AI BRING THIS ??
+      averageRentalYield: 0,
       securityDepositsCollected: 0,
-      totalPortfolioValue: null, // TODO: CAN RASPY AI BRING THIS ??
+      totalPortfolioValue: 0,
     },
     recommendedActions: [
       "Test - Displaying PropertyOverview",
@@ -30,9 +59,9 @@ export const RaspyAIResponseSchema = {
     },
     financialHealth: {
       totalMonthlyRentIncome: 0,
-      averageRentalYield: null, // TODO: CAN RASPY AI BRING THIS ??
+      averageRentalYield: 0,
       securityDepositsCollected: 0,
-      totalPortfolioValue: null, // TODO: CAN RASPY AI BRING THIS ??
+      totalPortfolioValue: 0,
     },
     recommendedActions: [
       "Test - Displaying TenantStatus",
@@ -51,9 +80,9 @@ export const RaspyAIResponseSchema = {
     },
     financialHealth: {
       totalMonthlyRentIncome: 0,
-      averageRentalYield: null, // TODO: CAN RASPY AI BRING THIS ??
+      averageRentalYield: 0,
       securityDepositsCollected: 0,
-      totalPortfolioValue: null, // TODO: CAN RASPY AI BRING THIS ??
+      totalPortfolioValue: 0,
     },
     recommendedActions: [
       "Test - Displaying RentAnalysis",
@@ -71,9 +100,9 @@ export const RaspyAIResponseSchema = {
     },
     financialHealth: {
       totalMonthlyRentIncome: 0,
-      averageRentalYield: null, // TODO: CAN RASPY AI BRING THIS ??
+      averageRentalYield: 0,
       securityDepositsCollected: 0,
-      totalPortfolioValue: null, // TODO: CAN RASPY AI BRING THIS ??
+      totalPortfolioValue: 0,
     },
     recommendedActions: [],
   },
@@ -85,9 +114,9 @@ export const RaspyAIResponseSchema = {
     },
     financialHealth: {
       totalMonthlyRentIncome: 0,
-      averageRentalYield: null, // TODO: CAN RASPY AI BRING THIS ??
+      averageRentalYield: 0,
       securityDepositsCollected: 0,
-      totalPortfolioValue: null, // TODO: CAN RASPY AI BRING THIS ??
+      totalPortfolioValue: 0,
     },
     recommendedActions: ["Test - Displaying MaintenanceAlerts"],
   },
@@ -99,9 +128,9 @@ export const RaspyAIResponseSchema = {
     },
     financialHealth: {
       totalMonthlyRentIncome: 0,
-      averageRentalYield: null, // TODO: CAN RASPY AI BRING THIS ??
+      averageRentalYield: 0,
       securityDepositsCollected: 0,
-      totalPortfolioValue: null, // TODO: CAN RASPY AI BRING THIS ??
+      totalPortfolioValue: 0,
     },
     recommendedActions: ["Testing - Other recommended actions is displayed"],
   },

@@ -81,7 +81,7 @@ export const handler = async (event) => {
           content: `
           User Question: ${message}
           Valid Intents: ${Object.values(IntentEnumValues)}
-          Classify user messages for a property management assistant. Return null
+          Classify user messages for a property management assistant.
           `,
         },
       ],

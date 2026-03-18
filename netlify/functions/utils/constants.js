@@ -7,10 +7,9 @@ export const Constants = {
   // Raspy AI related message
   RaspyUserIntentDetected:
     "Attempting to retrieve intent for requested message",
-  RaspyOtherIntentDetected:
-    "Found message with other intent. Displaying default message.",
   RaspyPropertyOverviewIntentDetected:
     "Found message with intent related to property overview.",
+  RaspyOtherIntentDetected: "Found message with intent noted as other.",
   RaspyErrorMessage: "Unable to fetch requested information from Raspy. ",
 
   // ARPS releted messages

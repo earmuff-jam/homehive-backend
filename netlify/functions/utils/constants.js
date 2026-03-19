@@ -22,6 +22,8 @@ export const Constants = {
     "Found rent due for selected tenant. Registering email service",
   ARPSRentOverDueDetected:
     "Found overdue rent for selected tenant. Registering email service",
+  ARPSAutoRenewPolicyFound:
+    "Found auto renew policy set up for selected tenant.",
   ARPSTenantRentNotDue:
     "Tenant start date begins at a later date. No rent request to process. Skipping",
   ARPSMetadataFoundMessage: "Metadata detected. Registering email service",

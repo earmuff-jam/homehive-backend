@@ -12,6 +12,10 @@ export const Constants = {
   RaspyOtherIntentDetected: "Found message with intent noted as other.",
   RaspyErrorMessage: "Unable to fetch requested information from Raspy. ",
 
+  // Email Service related messages
+  EmailSuccessResponse: "Successfully sent email",
+  EmailFailedResponse: "Failed to send email.",
+
   // ARPS releted messages
   ARPSMissingRequiredFields: "Missing fields for selected tenant. Skipping",
   ARPSRentRecordExists: "Found a matching rent record. Skipping",
@@ -80,6 +84,12 @@ export const Constants = {
     "Metadata detected. Using collection for storage services",
   StripePaymentStatusError:
     "Unable to process stripe payment services without correct payment status",
+  StripeFailedToCreateCheckoutSession:
+    "Failed to create stripe checkout session.",
+  StripeFailedToCreateAccount: "Failed to create stripe account",
+  StripeFailedToProcessPaymentConfirmation:
+    "Failed to process stripe payment confirmation",
+
   StripePaymentStatusCompleted: "paid",
   StripePaymentStatusManualStatus: "manual",
   StripePaymentIntentStatusCompleted: "succeeded",

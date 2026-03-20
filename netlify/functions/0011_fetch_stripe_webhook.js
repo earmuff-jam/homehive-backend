@@ -115,7 +115,6 @@ const handleStripeEventChargeCodes = (stripeEventType, session) => {
       });
 
       break;
-
     // Checkout Session events
     case StripeWebhookEnumValues.CheckoutSessionCompleted:
       if (session?.payment_status !== Constants.StripePaymentStatusCompleted) {
@@ -253,6 +252,7 @@ const processRentalPaymentsData = async (stripeEventType, data) => {
   try {
     // handle events with session metadata differently
     if (data?.metadata) {
+      const metadata = data?.metadata;
       const {
         propertyId,
         propertyOwnerId,
@@ -263,9 +263,7 @@ const processRentalPaymentsData = async (stripeEventType, data) => {
         dailyLateFee,
         rentMonth,
         tenantId,
-        note,
-        customEventType,
-      } = data?.metadata;
+      } = metadata;
 
       const stripePaymentIntentID = data?.payment_intent;
 

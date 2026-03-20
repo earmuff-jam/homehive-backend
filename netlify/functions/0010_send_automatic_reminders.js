@@ -26,7 +26,7 @@ const AdminAuthorizedKey = process.env.ADMIN_KEY;
 export const handler = async (event) => {
   // ARPS validation occurs differently
   if (!isDevEnv && event.queryStringParameters?.key !== AdminAuthorizedKey) {
-    console.error(Constants.MethodNotAuthorized);
+    console.debug(Constants.MethodNotAuthorized);
     return { statusCode: 401, body: Constants.MethodNotAuthorized };
   }
 
@@ -138,7 +138,7 @@ Earmuffjam LLC
       if (result.status === "fulfilled") {
         console.debug(`Email ${index} sent successfully`, result.value);
       } else {
-        console.error(`Email ${index} failed`, result.reason);
+        console.debug(`Email ${index} failed`, result.reason);
       }
     });
 
@@ -148,7 +148,7 @@ Earmuffjam LLC
       body: `Processed ${tenantSnapshots.size} tenants, sent ${emailPromises.length} reminders.\n`,
     };
   } catch (error) {
-    console.error("Error sending reminders:", error);
+    console.debug("Error sending reminders:", error);
     return {
       statusCode: 500,
       headers: populateCorsHeaders(),

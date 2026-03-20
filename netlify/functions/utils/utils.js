@@ -55,6 +55,10 @@ export const StripeWebhookEnumValues = {
   CheckoutSessionAsyncPaymentFailed: "checkout.session.async_payment_failed",
   InvoicePaymentSucceeded: "invoice.payment_succeeded",
   InvoicePaymentFailed: "invoice.payment_failed",
+  ChargeFailed: "charge.failed",
+  ChargePending: "charge.pending",
+  ChargeSucceeded: "charge.succeeded",
+  ChargeUpdated: "charge.updated",
 };
 
 // initializeFirebase ...

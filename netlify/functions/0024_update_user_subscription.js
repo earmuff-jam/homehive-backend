@@ -20,7 +20,7 @@ const IntegrationKey = process.env.INTEGRATION_KEY;
 
 export const handler = async (event) => {
   if (!isDevEnv && event.queryStringParameters?.key !== AdminAuthorizedKey) {
-    console.error(Constants.MethodNotAuthorized);
+    console.debug(Constants.MethodNotAuthorized);
     return {
       statusCode: 401,
       headers: {
@@ -39,7 +39,7 @@ export const handler = async (event) => {
       !data?.stripeCustomerId ||
       !data?.stripeSubscriptionId
     ) {
-      console.error(Constants.MissingRequiredFields);
+      console.debug(Constants.MissingRequiredFields);
       return false;
     }
 
@@ -62,8 +62,8 @@ export const handler = async (event) => {
     const shouldPublishEmailNotification = isDevEnv
       ? false
       : ["invoice.payment_failed", "checkout.session.completed"].includes(
-          sanitizedSubscriptionData?.stripeEventType,
-        );
+        sanitizedSubscriptionData?.stripeEventType,
+      );
 
     const docRef = db
       .collection("subscriptionPayments")

@@ -14,7 +14,7 @@ import {
   sanitizeApiFields,
 } from "./utils/utils";
 
-const isDevEnv = process.env.DEV_ENV;
+const isDevEnv = process.env.DEV_ENV === "true";
 const AdminAuthorizedKey = process.env.ADMIN_KEY;
 const IntegrationKey = process.env.INTEGRATION_KEY;
 
@@ -124,7 +124,7 @@ export const handler = async (event) => {
       );
 
       if (!response.ok) {
-        console.error(Constants.SubscriptionNotificationFailureErrorMsg);
+        console.error(Constants.FailedToSendEmailNotification);
         // eat the exception
         return {
           statusCode: 500,
@@ -132,7 +132,7 @@ export const handler = async (event) => {
             ...populateCorsHeaders(),
             "Content-Type": "application/json",
           },
-          body: Constants.SubscriptionNotificationFailureErrorMsg,
+          body: Constants.FailedToSendEmailNotification,
         };
       }
     }

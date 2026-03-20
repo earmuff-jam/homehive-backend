@@ -65,7 +65,7 @@ export const handler = async (event) => {
 
       if (tenant?.isAutoRenewPolicySet) {
         console.debug(Constants.ARPSAutoRenewPolicyFound);
-        // TODO :: do things 
+        // TODO :: do things
       }
 
       const upcommingDueDate = dayjs().date(dayjs(startDate).date());

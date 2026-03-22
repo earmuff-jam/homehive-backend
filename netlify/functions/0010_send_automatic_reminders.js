@@ -98,18 +98,18 @@ export const handler = async (event) => {
         text = `
 Hi ${email}, 
 
-  Your rent of $${propertyRent.toFixed(2)} was due on ${upcommingDueDate.format("MMMM D, YYYY")}. 
-  
-  Please ensure payments are made as soon as possible. 
-  As directed in our contract, a one time initial late fee of $${Number(tenant?.initialLateFee || 0).toFixed(2)} will be automatically applied and daily late fee of $${Number(tenant?.dailyLateFee || 0).toFixed(2)} will be applied every day thereafter.
-  
-  This is an auto-generated email. Please do not reply to this email.
+Your rent of $${propertyRent.toFixed(2)} was due on ${upcommingDueDate.format("MMMM D, YYYY")}. 
+
+Please ensure payments are made as soon as possible.
+
+As directed in our contract, a one time initial late fee of $${Number(tenant?.initialLateFee || 0).toFixed(2)} will be automatically applied and daily late fee of $${Number(tenant?.dailyLateFee || 0).toFixed(2)} will be applied every day thereafter.
+
+This is an auto-generated email. Please do not reply to this email.
   
 Thank you,
 ARPS Admin Team
 Earmuffjam LLC
-
-  `;
+`;
       }
 
       if (subject && text) {

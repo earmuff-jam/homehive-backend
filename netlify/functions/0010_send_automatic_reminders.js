@@ -13,15 +13,15 @@
 import dayjs from "dayjs";
 
 import { Constants } from "./utils/constants";
-import { initializeFirebase, populateCorsHeaders } from "./utils/utils";
+import {
+  ARPSReminderSettings,
+  initializeFirebase,
+  populateCorsHeaders,
+} from "./utils/utils";
 
 let db;
 const isDevEnv = process.env.DEV_ENV === "true";
 const AdminAuthorizedKey = process.env.ADMIN_KEY;
-
-const standardReminderSettings = {
-  GENERAL: [7, 3, 1, 0],
-};
 
 export const handler = async (event) => {
   // ARPS validation occurs differently
@@ -33,7 +33,7 @@ export const handler = async (event) => {
   try {
     const today = dayjs();
     const emailPromises = [];
-    const reminders = standardReminderSettings.GENERAL;
+    const reminders = ARPSReminderSettings.GENERAL;
 
     db = initializeFirebase(isDevEnv);
 
@@ -43,23 +43,24 @@ export const handler = async (event) => {
       .where("isActive", "==", true)
       .get();
 
-    const totalTenants = tenantSnapshots.size();
-
+    const totalTenants = tenantSnapshots.size;
     console.debug(
       `Processing ${totalTenants} at ${dayjs()} for email notification via ARPS handler`,
     );
+
     for (const tenantDocs of tenantSnapshots.docs) {
       const tenant = tenantDocs.data();
       const { propertyId, startDate, email } = tenant;
 
       if (!propertyId || !startDate || !email) {
         console.debug(Constants.ARPSMissingRequiredFields);
-        continue;
+        break; // eat the exception; does not send notification
       }
 
+      // prevents ARPS message if no rent is due
       if (dayjs(startDate).isAfter(dayjs())) {
         console.debug(Constants.ARPSTenantRentNotDue);
-        continue;
+        break;
       }
 
       const upcommingDueDate = dayjs().date(dayjs(startDate).date());
@@ -84,7 +85,7 @@ export const handler = async (event) => {
 
       let subject, text;
       if (reminders.includes(diffDays)) {
-        // rent is due; send payment reminder emails
+        // send reminder on specific days
         console.debug(Constants.ARPSRentDueDetected);
 
         subject = `Rent Reminder: Due in ${diffDays} day(s)`;
@@ -94,7 +95,21 @@ export const handler = async (event) => {
         console.debug(Constants.ARPSRentOverDueDetected);
 
         subject = `Rent Reminder: Overdue by ${Math.abs(diffDays)} day(s)`;
-        text = `Hi ${email}, your rent of $${propertyRent.toFixed(2)} was due on ${upcommingDueDate.format("MMMM D, YYYY")}. Please pay as soon as possible. As directed in our contract, a one time initial late fee of $${Number(tenant?.initialLateFee || 0).toFixed(2)} will be automatically applied and daily late fee of $${Number(tenant?.dailyLateFee || 0).toFixed(2)} will be applied every day thereafter.`;
+        text = `
+Hi ${email}, 
+
+Your rent of $${propertyRent.toFixed(2)} was due on ${upcommingDueDate.format("MMMM D, YYYY")}. 
+
+Please ensure payments are made as soon as possible.
+
+As directed in our contract, a one time initial late fee of $${Number(tenant?.initialLateFee || 0).toFixed(2)} will be automatically applied and daily late fee of $${Number(tenant?.dailyLateFee || 0).toFixed(2)} will be applied every day thereafter.
+
+This is an auto-generated email. Please do not reply to this email.
+  
+Thank you,
+ARPS Admin Team
+Earmuffjam LLC
+`;
       }
 
       if (subject && text) {

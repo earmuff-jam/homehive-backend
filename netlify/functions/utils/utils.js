@@ -1,9 +1,10 @@
+import { Constants } from "./constants";
 import admin from "firebase-admin";
 import fs from "fs";
 import path from "path";
 import { rgb } from "pdf-lib";
 
-const isDevEnv = process.env.IS_DEV_ENV === "true";
+const isDevEnv = process.env.DEV_ENV === "true";
 const IntegrationApiKey = process.env.INTEGRATION_KEY;
 
 const EsignBaseUrl = "https://api.firma.dev/functions/v1/signing-request-api";
@@ -21,6 +22,242 @@ export const EsignTemplatesUrl = EsignBaseUrl + EsignTemplatesUri;
 export const GoodSignTemplatesUrl = GoodSignBaseUrl + EsignTemplatesUri;
 export const GoodSignTemplateToEsignUrl =
   GoodSignBaseUrl + GoodSignTemplateToEsignUri;
+
+// Role ...
+// defines the role used by web ui
+export const Role = {
+  User: "USER",
+  Admin: "ADMIN",
+  Owner: "OWNER",
+  Tenant: "TENANT",
+};
+
+// ARPSReminderSettings ...
+// defines the configuration settings for ARPS
+export const ARPSReminderSettings = {
+  GENERAL: [7, 3, 1, 0],
+};
+
+// initializeFirebase ...
+// defines a function that initializes firebase
+export const initializeFirebase = (isDevEnv = false) => {
+  if (!admin.apps.length) {
+    if (isDevEnv) {
+      console.debug("Running in developmental instance. ");
+      const serviceAccountPath = path.resolve("./dev/account.json");
+      const serviceAccount = JSON.parse(
+        fs.readFileSync(serviceAccountPath, "utf8"),
+      );
+
+      admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+      });
+    } else {
+      admin.initializeApp({
+        credential: admin.credential.cert({
+          projectId: process.env["FIREBASE_ADMIN_PROJECT_ID"],
+          clientEmail: process.env["FIREBASE_ADMIN_CLIENT_EMAIL"],
+          privateKey: process.env.FIREBASE_ADMIN_PRIVATE_KEY.replace(
+            /\\n/gm,
+            "\n",
+          ).replace(/\\\\n/gm, "\n"),
+        }),
+      });
+    }
+  }
+
+  return admin.firestore();
+};
+
+// populateCorsHeaders ...
+// defines a function that populates cors headers for each functions
+export const populateCorsHeaders = () => {
+  return {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+  };
+};
+
+// validateRequest ...
+// defines a function that is used to validate a request
+export const validateRequest = (apiKey = "") => {
+  if (isDevEnv) return true;
+  if (!isDevEnv && apiKey === IntegrationApiKey) return true;
+  return false;
+};
+
+// populateApiFields ...
+// defines a function that populates api fields for esign template
+export const populateApiFields = (fields, schemas = []) => {
+  const fetchValue = (
+    key,
+    valueType,
+    trimPrefixLength = 1,
+    isTenantSigner = false,
+  ) => {
+    const trimmedKey = key.substring(trimPrefixLength);
+
+    if (fields[trimmedKey] === undefined) return null;
+
+    switch (valueType) {
+      case "string":
+        return {
+          key,
+          value: String(fields[trimmedKey]),
+          info_current_value: "text",
+          info_current_contact: "",
+          info_current_type: "label",
+          info_current_subtype: "",
+        };
+
+      case "boolean": {
+        const checked = Boolean(fields[trimmedKey]);
+        return {
+          key,
+          value: checked ? "\u2713" : "",
+          info_current_value: checked ? "\u2713" : "",
+          info_current_contact: "propertyowner@temp.template",
+          info_current_type: "input",
+          info_current_subtype: "checkbox",
+        };
+      }
+
+      case "dateTime":
+        return {
+          key,
+          value: String(fields[trimmedKey]),
+          info_current_value: "dd/mm/yyyy",
+          info_current_contact: isTenantSigner
+            ? "tenant@temp.template"
+            : "propertyowner@temp.template",
+          info_current_type: "input",
+          info_current_subtype: "datesigned",
+        };
+
+      default:
+        return null;
+    }
+  };
+
+  const draft = {};
+  for (const [key, type, trim = 1, tenantSigner = false] of schemas) {
+    const value = fetchValue(key, type, trim, tenantSigner);
+    if (value !== null) {
+      draft[key] = value;
+    }
+  }
+
+  return draft;
+};
+
+// populateSignerFields ...
+// defines a function that populates signer fields for esign template
+export const populateSignerFields = (key, name, email) => {
+  return Object.assign(
+    {},
+    {
+      key,
+      name,
+      email,
+      reminder_days: DefaultReminderDays,
+    },
+  );
+};
+
+// DefaultInvoiceStatusOptions ...
+// defines the type for default invoice status options
+export const DefaultInvoiceStatusOptions = [
+  {
+    id: 1,
+    label: "Paid",
+    textColor: rgb(0, 0, 0), // black
+    borderColor: rgb(0.94, 0.27, 0.27),
+  },
+  {
+    id: 2,
+    label: "Draft",
+    textColor: rgb(1, 1, 1),
+    borderColor: rgb(0.94, 0.27, 0.27),
+  },
+  {
+    id: 3,
+    label: "Overdue",
+    textColor: rgb(1, 1, 1),
+    borderColor: rgb(0.94, 0.27, 0.27), // red
+  },
+  {
+    id: 4,
+    label: "Cancelled",
+    textColor: rgb(1, 1, 1),
+    borderColor: rgb(0.94, 0.27, 0.27),
+  },
+  {
+    id: 5,
+    label: "None",
+    textColor: rgb(1, 1, 1),
+    borderColor: rgb(1, 1, 1),
+  },
+];
+
+// RentAppSubscriptionStatusEnumValues ...
+// defines Enum values that represent Subscription Status
+//
+export const RentAppSubscriptionStatusEnumValues = {
+  SubscriptionInit: "created", // initialized, payment not made
+  SubscriptionActive: "active", // active, g2g
+  SubscriptionPastDue: "past_due", // active, payment due
+  SubscriptionPaymentUpdateIssued: "update_issued", // active payment, customer attempted to change payment
+  SubscriptionPaymentComplete: "completed", // inactive, but payment made; happens for bank transfer
+  SubscriptionCancelled: "cancelled", // customer no longer requires / wants subscription
+};
+
+// generateSubscriptionMessageNotification ...
+// defines a function that generates subscription message notification
+export const generateSubscriptionMessageNotification = (
+  productName,
+  productCost,
+) => {
+  if (!productName || !productCost) {
+    console.debug(Constants.MissingRequiredFields);
+    return {
+      subject: "",
+      text: "",
+    };
+  }
+
+  const draftText = `
+  Hi there,
+  
+  Attached is your notification of payment for Rent App with Earmuffjam LLC. 
+  
+  Please ensure that all information is valid and correct.
+
+  Subscription Term: ${productName}
+  Subscription Cost (per month): $${productCost}
+
+  Please note that some transaction take couple of days to process fully.
+
+  Thank you,
+  
+  This is an auto-generated email. Please do not reply to this email.
+  `;
+
+  return {
+    subject: "Subscription Notification for Rent App",
+    text: draftText,
+  };
+};
+
+// sanitizeApiFields ...
+// defines a function that removes all null or undefined values from an object
+export const sanitizeApiFields = (obj = {}) =>
+  /* eslint-disable no-unused-vars */
+  Object.fromEntries(Object.entries(obj).filter(([_, value]) => value != null));
+
+// pickRandom ...
+// defines a function that selects one item at random from a list
+export const pickRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
 export const DocumentOnePageSchema = [
   // ===== PAGE 1 =====
@@ -233,166 +470,4 @@ export const DocumentThreePageSchema = [
   ["ext-dateSigned1", "dateTime", 4],
   ["ext-tenant", "string", 4],
   ["ext-dateSigned2", "dateTime", 4, true],
-];
-
-// initializeFirebase ...
-// defines a function that initializes firebase
-export const initializeFirebase = (isDevEnv = false) => {
-  if (!admin.apps.length) {
-    if (isDevEnv) {
-      console.log("Running in developmental instance. ");
-      const serviceAccountPath = path.resolve("./dev/account.json");
-      const serviceAccount = JSON.parse(
-        fs.readFileSync(serviceAccountPath, "utf8"),
-      );
-
-      admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
-      });
-    } else {
-      admin.initializeApp({
-        credential: admin.credential.cert({
-          projectId: process.env["FIREBASE_ADMIN_PROJECT_ID"],
-          clientEmail: process.env["FIREBASE_ADMIN_CLIENT_EMAIL"],
-          privateKey: process.env.FIREBASE_ADMIN_PRIVATE_KEY.replace(
-            /\\n/gm,
-            "\n",
-          ).replace(/\\\\n/gm, "\n"),
-        }),
-      });
-    }
-  }
-
-  return admin.firestore();
-};
-
-// populateCorsHeaders ...
-// defines a function that populates cors headers for each functions
-export const populateCorsHeaders = () => {
-  return {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
-  };
-};
-
-// validateRequest ...
-// defines a function that is used to validate a request
-export const validateRequest = (apiKey = "") => {
-  if (isDevEnv === "true") return true;
-  if (!isDevEnv && apiKey === IntegrationApiKey) return true;
-  return false;
-};
-
-// populateApiFields ...
-// defines a function that populates api fields for esign template
-export const populateApiFields = (fields, schemas = []) => {
-  const fetchValue = (
-    key,
-    valueType,
-    trimPrefixLength = 1,
-    isTenantSigner = false,
-  ) => {
-    const trimmedKey = key.substring(trimPrefixLength);
-
-    if (fields[trimmedKey] === undefined) return null;
-
-    switch (valueType) {
-      case "string":
-        return {
-          key,
-          value: String(fields[trimmedKey]),
-          info_current_value: "text",
-          info_current_contact: "",
-          info_current_type: "label",
-          info_current_subtype: "",
-        };
-
-      case "boolean": {
-        const checked = Boolean(fields[trimmedKey]);
-        return {
-          key,
-          value: checked ? "\u2713" : "",
-          info_current_value: checked ? "\u2713" : "",
-          info_current_contact: "propertyowner@temp.template",
-          info_current_type: "input",
-          info_current_subtype: "checkbox",
-        };
-      }
-
-      case "dateTime":
-        return {
-          key,
-          value: String(fields[trimmedKey]),
-          info_current_value: "dd/mm/yyyy",
-          info_current_contact: isTenantSigner
-            ? "tenant@temp.template"
-            : "propertyowner@temp.template",
-          info_current_type: "input",
-          info_current_subtype: "datesigned",
-        };
-
-      default:
-        return null;
-    }
-  };
-
-  const draft = {};
-  for (const [key, type, trim = 1, tenantSigner = false] of schemas) {
-    const value = fetchValue(key, type, trim, tenantSigner);
-    if (value !== null) {
-      draft[key] = value;
-    }
-  }
-
-  return draft;
-};
-
-// populateSignerFields ...
-// defines a function that populates signer fields for esign template
-export const populateSignerFields = (key, name, email) => {
-  return Object.assign(
-    {},
-    {
-      key,
-      name,
-      email,
-      reminder_days: DefaultReminderDays,
-    },
-  );
-};
-
-// DefaultInvoiceStatusOptions ...
-// defines the type for default invoice status options
-export const DefaultInvoiceStatusOptions = [
-  {
-    id: 1,
-    label: "Paid",
-    textColor: rgb(0, 0, 0), // black
-    borderColor: rgb(0.94, 0.27, 0.27),
-  },
-  {
-    id: 2,
-    label: "Draft",
-    textColor: rgb(1, 1, 1),
-    borderColor: rgb(0.94, 0.27, 0.27),
-  },
-  {
-    id: 3,
-    label: "Overdue",
-    textColor: rgb(1, 1, 1),
-    borderColor: rgb(0.94, 0.27, 0.27), // red
-  },
-  {
-    id: 4,
-    label: "Cancelled",
-    textColor: rgb(1, 1, 1),
-    borderColor: rgb(0.94, 0.27, 0.27),
-  },
-  {
-    id: 5,
-    label: "None",
-    textColor: rgb(1, 1, 1),
-    borderColor: rgb(1, 1, 1),
-  },
 ];

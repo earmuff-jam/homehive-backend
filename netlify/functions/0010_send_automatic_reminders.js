@@ -145,7 +145,7 @@ Earmuffjam LLC
     return {
       statusCode: 200,
       headers: populateCorsHeaders(),
-      body: `Processed ${tenantSnapshots.size} tenants, sent ${emailPromises.length} reminders.\n`,
+      body: `Processed ${totalTenants} tenants, sent ${emailPromises.length} reminders.\n`,
     };
   } catch (error) {
     console.error("Error sending reminders:", error);

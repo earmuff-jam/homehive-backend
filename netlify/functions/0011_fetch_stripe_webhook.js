@@ -263,6 +263,7 @@ const processRentalPaymentsData = async (stripeEventType, data) => {
         dailyLateFee,
         rentMonth,
         tenantId,
+        note,
         customEventType,
       } = data?.metadata;
 
@@ -283,6 +284,7 @@ const processRentalPaymentsData = async (stripeEventType, data) => {
           stripeEventType,
           paymentMethodType: Object.keys(data.payment_method_options)[0],
           createdBy: tenantId, // tenant is the only one who can pay
+          note, // description of charge
           createdOn: dayjs().toISOString(),
           updatedBy: tenantId,
           updatedOn: dayjs().toISOString(),

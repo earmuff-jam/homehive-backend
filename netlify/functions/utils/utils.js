@@ -38,6 +38,25 @@ export const ARPSReminderSettings = {
   GENERAL: [7, 3, 1, 0],
 };
 
+// StripeOnetimePaymentEnumValue ...
+export const StripeOnetimePaymentEnumValue = "onetime.payment";
+
+// StripeWebhookEnumValues ...
+// defines the configuration keys for stripe webhook handler
+export const StripeWebhookEnumValues = {
+  CustomerSubscriptionUpdated: "customer.subscription.updated",
+  CustomerSubscriptionCreated: "customer.subscription.created",
+  PaymentIntentCreated: "payment_intent.created",
+  PaymentIntentProcessing: "payment_intent.processing",
+  PaymentIntentSucceeded: "payment_intent.succeeded",
+  CheckoutSessionCompleted: "checkout.session.completed",
+  CheckoutSessionAsyncPaymentSucceeded:
+    "checkout.session.async_payment_succeeded",
+  CheckoutSessionAsyncPaymentFailed: "checkout.session.async_payment_failed",
+  InvoicePaymentSucceeded: "invoice.payment_succeeded",
+  InvoicePaymentFailed: "invoice.payment_failed",
+};
+
 // initializeFirebase ...
 // defines a function that initializes firebase
 export const initializeFirebase = (isDevEnv = false) => {
@@ -245,6 +264,41 @@ export const generateSubscriptionMessageNotification = (
 
   return {
     subject: "Subscription Notification for Rent App",
+    text: draftText,
+  };
+};
+
+// generateOnetimePaymentChargeNotification ...
+// defines a function that generates one time payment charge notification
+export const generateOnetimePaymentChargeNotification = (cost, link) => {
+  if (!cost || !link) {
+    console.debug(Constants.MissingRequiredFields);
+    return {
+      subject: "",
+      text: "",
+    };
+  }
+
+  const draftText = `
+  Hi there,
+  
+  Attached is your notification of one time charge for ${cost}. 
+  
+  Please ensure that all information is valid and correct.
+
+  One time cost: $${cost}
+  Payment Link: $${link}
+
+  Please note that some transaction take couple of days to process fully.
+
+  Thank you,
+  Earmuffjam LLC
+
+  This is an auto-generated email. Please do not reply to this email.
+  `;
+
+  return {
+    subject: "One time payment request",
     text: draftText,
   };
 };

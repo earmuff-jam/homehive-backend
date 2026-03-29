@@ -2,16 +2,20 @@
  * File : 0011_fetch_stripe_webhook.js
  *
  * This file is used to fetch data from stripe when the event loop
- * is completed in stripe. This functionality is used by stripe to support
- * XX event after an activity in stripe has been completed. Eg, if a payment is
- * moved from pending to paid, then the webhook should be called by stripe to
- * mark the payment complete in db.
+ * is completed in stripe. Supports subscription and rental payment from
+ * tenant to property owner via the button "Pay Rent" under Tenant view
+ * in Rent App
  *
  * Must have feature flags enabled for this feature.
  */
 import dayjs from "dayjs";
 
-import { populateCorsHeaders } from "./utils/utils";
+import { Constants } from "./utils/constants";
+import {
+  StripeOnetimePaymentEnumValue,
+  StripeWebhookEnumValues,
+  populateCorsHeaders,
+} from "./utils/utils";
 import Stripe from "stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
@@ -21,13 +25,14 @@ export const handler = async (event) => {
   let stripeEvent;
 
   try {
+    console.debug(Constants.StripeEventHandlerInit);
     stripeEvent = stripe.webhooks.constructEvent(
       event.body,
       sig,
       process.env.STRIPE_WEBHOOK_SECRET,
     );
   } catch (err) {
-    console.error("Webhook signature verification failed:", err.message);
+    console.debug(Constants.StripeEventHandlerErrorMsg, err.message);
     return {
       statusCode: 400,
       headers: populateCorsHeaders(),
@@ -35,8 +40,8 @@ export const handler = async (event) => {
     };
   }
 
-  // handle payment charge code associations
-  handlePaymentChargeCodes(stripeEvent?.type, stripeEvent?.data?.object);
+  handleStripeEventChargeCodes(stripeEvent?.type, stripeEvent?.data?.object);
+  console.debug(Constants.StripeEventHandlerComplete);
 
   return {
     statusCode: 200,
@@ -45,138 +50,203 @@ export const handler = async (event) => {
   };
 };
 
-// handlePaymentChargeCodes ...
+// handleStripeEventChargeCodes ...
 // defines a function that is used to update stripe payment services
 // based on various associations made by stripe payment services.
-const handlePaymentChargeCodes = (stripeEventType, eventDetails) => {
+const handleStripeEventChargeCodes = (stripeEventType, session) => {
   switch (stripeEventType) {
-    // Payment Intents
-    case "payment_intent.created":
-      console.info(
-        "Submitted stripe payment services for payment intent with created stamp.",
-      );
-      updateDb(stripeEventType, {
-        id: eventDetails?.id,
-        amount: eventDetails?.amount,
-        status: eventDetails?.status,
+    // Subscription Intents
+    case StripeWebhookEnumValues.CustomerSubscriptionCreated:
+      console.debug(Constants.SubscriptionCreatedSuccessMsg);
+      const subscriptionItem = data?.items.data[0];
+      processSubscriptionData(type, {
+        stripeSubscriptionId: data?.id,
+        subscriptionAmount: subscriptionItem?.plan?.amount,
+        subscriptionStatus:
+          RentAppSubscriptionStatusEnumValues.SubscriptionInit,
+        stripeInvoiceId: "", // display intent
+        stripeCustomerId: data.customer,
+        stripeCustomerEmail: "", // display intent
+        createdOn: dayjs().toISOString(),
       });
+
       break;
-    case "payment_intent.processing":
-      console.info(
-        "Submitted stripe payment services for payment intent with processing stamp.",
-      );
-      updateDb(stripeEventType, {
-        id: eventDetails?.id,
-        amount: eventDetails?.amount,
-        status: eventDetails?.status,
+
+    // stripeInvoiceId and stripeCustomerEmail here are not present.
+    // this is by stripe design. does not affect structural change
+    // for subscription handler. no subscriptionStatus enum value
+    // since we retain validity till payment completion
+    case StripeWebhookEnumValues.CustomerSubscriptionUpdated:
+      console.debug(Constants.SubscriptionUpdatedSuccessMsg);
+
+      const subsItem = data?.items.data[0];
+      const isUserAttemptingToCancelSubscription =
+        Boolean(data?.cancel_at) ||
+        Boolean(data?.cancel_at_period_end) ||
+        Boolean(data?.canceled_at);
+
+      if (isUserAttemptingToCancelSubscription) {
+        console.debug(
+          "Cancelling subscription per user request at ",
+          dayjs().toISOString(),
+        );
+
+        processSubscriptionData(type, {
+          stripeSubscriptionId: data?.id,
+          subscriptionAmount: subsItem?.plan?.amount,
+          subscriptionStatus:
+            RentAppSubscriptionStatusEnumValues.SubscriptionCancelled,
+          stripeLatestInvoiceId: data?.latest_invoice, // displays the last invoice
+          stripeCustomerId: data.customer,
+          markedDeletedOn: dayjs().toISOString(),
+          updatedOn: dayjs().toISOString(),
+        });
+
+        return;
+      }
+
+      console.debug(Constants.SubscriptionDetailsUpdatedSuccessMsg);
+
+      processSubscriptionData(type, {
+        stripeSubscriptionId: data?.id,
+        subscriptionAmount: data?.plan?.amount,
+        stripeCustomerId: data.customer,
+        updatedOn: dayjs().toISOString(),
       });
-      break;
-    case "payment_intent.succeeded":
-      console.info(
-        "Submitted stripe payment services for payment intent with success stamp.",
-      );
-      updateDb(stripeEventType, {
-        id: eventDetails?.id,
-        amount: eventDetails?.amount,
-        status: eventDetails?.status,
-      });
+
       break;
 
     // Checkout Session events
-    case "checkout.session.completed":
-      console.info(
-        "Submitted stripe payment services for checkout session intent with completed stamp.",
-      );
-      updateDb(stripeEventType, eventDetails);
-      break;
-    case "checkout.session.async_payment_succeeded":
-      console.info(
-        "Submitted async stripe payment services for payment intent with success stamp.",
-      );
-      updateDb(stripeEventType, eventDetails);
-      break;
-    case "checkout.session.async_payment_failed":
-      console.info(
-        "Submitted async stripe payment services for payment intent with failure stamp.",
-      );
-      updateDb(stripeEventType, eventDetails);
+    case StripeWebhookEnumValues.CheckoutSessionCompleted:
+      if (session?.payment_status !== Constants.StripePaymentStatusCompleted) {
+        console.debug(Constants.StripePaymentStatusError);
+        return;
+      }
+
+      console.debug(Constants.StripeCheckoutSessionCompleted);
+
+      processVariousCheckoutSessions(stripeEventType, session);
+
       break;
 
-    // Charge events
-    case "charge.failed":
-      console.info(
-        "Submitted stripe payment services for charge intent with failed stamp.",
-      );
-      updateDb(stripeEventType, {
-        id: eventDetails?.payment_intent, // payment_intent is unique accessor
-        amount: eventDetails?.amount,
-        status: eventDetails?.status,
-        paymentMethod: eventDetails?.payment_method,
-        paymentMethodDetails: eventDetails?.payment_method_details,
-      });
+    case StripeWebhookEnumValues.CheckoutSessionAsyncPaymentSucceeded:
+      console.debug(Constants.StripeCheckoutSessionAsyncPaymentSucceeded);
+
+      processVariousCheckoutSessions(stripeEventType, session);
+
       break;
-    case "charge.pending":
-      console.info(
-        "Submitted stripe payment services for charge intent with pending stamp.",
-      );
-      updateDb(stripeEventType, {
-        id: eventDetails?.payment_intent, // payment_intent is unique accessor
-        amount: eventDetails?.amount,
-        status: eventDetails?.status,
-        paymentMethod: eventDetails?.payment_method,
-        paymentMethodDetails: eventDetails?.payment_method_details,
-      });
+
+    case StripeWebhookEnumValues.CheckoutSessionAsyncPaymentFailed:
+      console.debug(Constants.StripeCheckoutSessionAsyncPaymentFailed);
+
+      processVariousCheckoutSessions(stripeEventType, session);
+
       break;
-    case "charge.succeeded":
-      console.info(
-        "Submitted stripe payment services for charge intent with success stamp.",
-      );
-      updateDb(stripeEventType, {
-        id: eventDetails?.payment_intent, // payment_intent is unique accessor
-        amount: eventDetails?.amount,
-        status: eventDetails?.status,
-        paymentMethod: eventDetails?.payment_method,
-        paymentMethodDetails: eventDetails?.payment_method_details,
-        recieptURL: eventDetails?.receipt_url,
+
+    // Invoice intents; after payments workflow
+    case StripeWebhookEnumValues.InvoicePaymentSucceeded:
+      // only webhook that can setup stripe subscription; suggested by Stripe
+      console.debug(Constants.SubscriptionPaymentSuccessMsg);
+
+      processSubscriptionData(type, {
+        stripeSubscriptionId:
+          session?.parent?.subscription_details?.subscription,
+        subscriptionAmount: session?.total,
+        subscriptionStatus: session?.status,
+        stripeInvoiceId: session?.lines?.data[0].invoice, // users can only select monthly plan or yearly plan
+        stripeCustomerId: session.customer,
+        stripeCustomerEmail: session.customer_email,
+        updatedOn: dayjs().toISOString(),
+        updateExtraCollection: ["users"], // server representation of additional tables to update
       });
+
       break;
-    case "charge.updated":
-      console.info(
-        "Submitted stripe payment services for charge intent with updated stamp.",
-      );
-      updateDb(stripeEventType, {
-        id: eventDetails?.payment_intent, // payment_intent is unique accessor
-        amount: eventDetails?.amount,
-        status: eventDetails?.status,
-        paymentMethod: eventDetails?.payment_method,
-        paymentMethodDetails: eventDetails?.payment_method_details,
+
+    case StripeWebhookEnumValues.InvoicePaymentFailed:
+      console.debug(Constants.SubscriptionPaymentErrorMsg);
+
+      processSubscriptionData(type, {
+        stripeCustomerId: session.customer,
+        stripeSubscriptionId: session.subscription,
+        subscriptionStatus:
+          RentAppSubscriptionStatusEnumValues.SubscriptionPastDue,
+        updatedOn: dayjs().toISOString(),
       });
+
       break;
+
     // Default
     default:
       /* eslint-disable no-console */
-      console.debug("No matching case for event type:", stripeEventType);
+      console.debug(Constants.StripeNoMatchingWebhookValue, stripeEventType);
       break;
   }
 };
 
-/**
- * updateDb ...
- *
- * used to update the db for rent payment webhook handler.
- *
- * @param {Object} data - the data to post into the db.
- * @param {string} stripeEventType - the type of event that we need to process.
- *
- * @returns {Boolean} truthly of falsy value
- */
-const updateDb = async (stripeEventType, data) => {
+//  processVariousCheckoutSessions ...
+// defines a function that attempts to check if the payment
+// is of a subscription mode or regular rental payments mode
+const processVariousCheckoutSessions = (stripeEventType, session) => {
+  if (session.mode === "subscription") {
+    console.debug(Constants.StripeCheckoutSessionSubscriptionMode);
+    const formattedNumber = Number(session?.metadata?.productCost ?? 0) / 100;
+    processSubscriptionData(type, {
+      stripeSubscriptionId: session.subscription,
+      subscriptionAmount: formattedNumber,
+      subscriptionProductName: session?.metadata?.productName,
+      subscriptionStatus: session?.payment_status,
+      stripeInvoiceId: session?.invoice,
+      stripeCustomerId: session.customer,
+      stripeCustomerEmail: session.metadata?.customer_email,
+    });
+  } else {
+    console.debug(Constants.StripeCheckoutSessionRentPaymentMode);
+    processRentalPaymentsData(stripeEventType, session);
+  }
+};
+
+// processSubscriptionData ...
+// defines a function that is used to process subscription wehbook events
+const processSubscriptionData = async (type, data) => {
+  if (!data?.stripeCustomerId) {
+    console.debug(Constants.MissingRequiredFields);
+    return null;
+  }
+
+  try {
+    const response = await fetch(
+      `${process.env.SITE_URL}/.netlify/functions/0024_update_user_subscription`,
+      {
+        method: "POST",
+        headers: {
+          ...populateCorsHeaders(),
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ ...data, stripeEventType: type }),
+      },
+    );
+
+    if (!response.ok) {
+      console.error("failed to update db.");
+      throw new Error(`Failed to update db: ${response.statusText}`);
+    }
+
+    return true;
+  } catch (err) {
+    console.error("processSubscriptionData error:", err);
+    return false;
+  }
+};
+
+// processRentalPaymentsData ...
+// defines a function that is used to process rental payment webhook events
+const processRentalPaymentsData = async (stripeEventType, data) => {
   if (
     !stripeEventType ||
     typeof data !== "object" ||
     Object.keys(data).length === 0
   ) {
-    console.error("unable to update data. missing required fields.");
+    console.debug(Constants.MissingRequiredFields);
     return null;
   }
 
@@ -193,49 +263,93 @@ const updateDb = async (stripeEventType, data) => {
         dailyLateFee,
         rentMonth,
         tenantId,
+        customEventType,
       } = data?.metadata;
 
       const stripePaymentIntentID = data?.payment_intent;
 
-      const draftData = {
-        tenantId,
-        tenantEmail,
-        propertyId,
-        propertyOwnerId,
-        rentMonth,
-        rentAmount: Number(rentAmount) / 100, // stripe reads amount in cents
-        additionalCharges: Number(additionalCharges) / 100,
-        initialLateFee: Number(initialLateFee) / 100,
-        dailyLateFee: Number(dailyLateFee) / 100,
-        stripePaymentIntentID,
-        method: "stripe",
-        status: data.status,
-        stripeEventType,
-        paymentMethodType: Object.keys(data.payment_method_options)[0],
-        createdBy: tenantId, // tenant is the only one who can pay
-        createdOn: dayjs().toISOString(),
-        updatedBy: tenantId,
-        updatedOn: dayjs().toISOString(),
-      };
-      const response = await fetch(
-        `${process.env.SITE_URL}/.netlify/functions/0012_update_stripe_payments`,
-        {
-          method: "POST",
-          headers: {
-            ...populateCorsHeaders(),
-            "Content-Type": "application/json",
+      if (customEventType === StripeOnetimePaymentEnumValue) {
+        // demonstrates one time payment made by tenant to property owner
+        const draftData = {
+          tenantId,
+          tenantEmail,
+          propertyId,
+          propertyOwnerId,
+          rentMonth,
+          rentAmount,
+          stripePaymentIntentID,
+          method: "stripe",
+          status: data.status,
+          stripeEventType,
+          paymentMethodType: Object.keys(data.payment_method_options)[0],
+          createdBy: tenantId, // tenant is the only one who can pay
+          createdOn: dayjs().toISOString(),
+          updatedBy: tenantId,
+          updatedOn: dayjs().toISOString(),
+          customEventType,
+        };
+        const response = await fetch(
+          `${process.env.SITE_URL}/.netlify/functions/0012_update_stripe_payments`,
+          {
+            method: "POST",
+            headers: {
+              ...populateCorsHeaders(),
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(draftData),
           },
-          body: JSON.stringify(draftData),
-        },
-      );
+        );
 
-      if (!response.ok) {
-        console.error("failed to update db.");
-        throw new Error(`Failed to update DB: ${response.statusText}`);
+        if (!response.ok) {
+          console.error("failed to update db.");
+          throw new Error(`Failed to update DB: ${response.statusText}`);
+        }
+
+        return true;
+      } else {
+        // demonstrates rental payments made by tenant to property owner
+        const draftData = {
+          tenantId,
+          tenantEmail,
+          propertyId,
+          propertyOwnerId,
+          rentMonth,
+          rentAmount: Number(rentAmount) / 100, // stripe reads amount in cents
+          additionalCharges: Number(additionalCharges) / 100,
+          initialLateFee: Number(initialLateFee) / 100,
+          dailyLateFee: Number(dailyLateFee) / 100,
+          stripePaymentIntentID,
+          method: "stripe",
+          status: data.status,
+          stripeEventType,
+          paymentMethodType: Object.keys(data.payment_method_options)[0],
+          createdBy: tenantId, // tenant is the only one who can pay
+          createdOn: dayjs().toISOString(),
+          updatedBy: tenantId,
+          updatedOn: dayjs().toISOString(),
+        };
+
+        const response = await fetch(
+          `${process.env.SITE_URL}/.netlify/functions/0012_update_stripe_payments`,
+          {
+            method: "POST",
+            headers: {
+              ...populateCorsHeaders(),
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(draftData),
+          },
+        );
+
+        if (!response.ok) {
+          console.error("failed to update db.");
+          throw new Error(`Failed to update DB: ${response.statusText}`);
+        }
+
+        return true;
       }
-
-      return true;
     } else {
+      // handle events without session metadata
       const draftData = {
         stripePaymentIntentID: data.id,
         method: "stripe",
@@ -258,14 +372,15 @@ const updateDb = async (stripeEventType, data) => {
       );
 
       if (!response.ok) {
-        console.error("failed to update db.");
-        throw new Error(`Failed to update DB: ${response.statusText}`);
+        console.debug(Constants.FailedToprocessRentalPaymentsDataError);
+        throw new Error(
+          `${Constants.FailedToprocessRentalPaymentsDataError} Error: ${response.statusText}`,
+        );
       }
-
       return false;
     }
   } catch (err) {
-    console.error("updateDb error:", err);
+    console.error(Constants.StripeEventHandlerErrorMsg, err);
     return false;
   }
 };

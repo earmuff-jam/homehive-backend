@@ -25,10 +25,6 @@ export const Constants = {
   ARPSTenantRentNotDue:
     "Tenant start date begins at a later date. No rent request to process. Skipping",
   ARPSMetadataFoundMessage: "Metadata detected. Registering email service",
-  ARPSRentalPaymentsDbDuringUpdateStripePayment:
-    "Initializing database for default rental payments service",
-  ARPSRentsDbDuringUpdateStripePayment:
-    "Metadata detected. Using default collection for storage services",
   ARPSWebhookHandlerFailed:
     "Failed to update database with details from webhook handler",
   ARPSCreateSigningRequestInitializedMessage:
@@ -46,7 +42,44 @@ export const Constants = {
   PaymentRecievedYetToProcess:
     "Payment recieved, but has not been completed yet from stripe",
 
-  // Stripe Payment Status Messages
+  // Stripe payment services related messages
+  StripeEventHandlerInit: "Starting event handler to process request",
+  StripeEventHandlerComplete: "Completed event handler processing request",
+  StripeEventHandlerErrorMsg:
+    "Unable to process webhook signature request, error: ",
+  StripePaymentIntentCreatedMsg:
+    "Processing stripe payment services for payment intent with created stamp.",
+  StripePaymentIntentProcessingMsg:
+    "Processing stripe payment services for payment intent with processing stamp.",
+  StripePaymentIntentSucceededMsg:
+    "Processing stripe payment services for payment intent with successed stamp.",
+  StripeCheckoutSessionCompleted:
+    "Processing stripe payment services for checkout session intent with complete stamp.",
+  StripeCheckoutSessionSubscriptionMode:
+    "Detected subscription mode, registering as a subscription service",
+  StripeCheckoutSessionRentPaymentMode:
+    "Detected rental payments mode, registering as a rent payment service",
+
+  StripeCheckoutSessionAsyncPaymentSucceeded:
+    "Processing stripe payment services for checkout async session intent with payments succeeded stamp.",
+  StripeCheckoutSessionAsyncPaymentFailed:
+    "Processing stripe payment services for checkout async session intent with payments failed stamp.",
+  StripeChargeFailed:
+    "Processing stripe payment services for charge intent with failed stamp.",
+  StripeChargePending:
+    "Processing stripe payment services for charge intent with pending stamp.",
+  StripeChargeSucceeded:
+    "Processing stripe payment services for charge intent with success stamp.",
+  StripeChargeUpdated:
+    "Processing stripe payment services for charge intent with update stamp.",
+  StripeNoMatchingWebhookValue:
+    "No matching webhook value found for event type:",
+  StripeSelectedCollectionInit:
+    "No Metadata detected. Using collection for rental payment services",
+  StripeUpdateSelectedCollection:
+    "Metadata detected. Using collection for storage services",
+  StripePaymentStatusError:
+    "Unable to process stripe payment services without correct payment status",
   StripePaymentStatusCompleted: "paid",
   StripePaymentStatusManualStatus: "manual",
   StripePaymentIntentStatusCompleted: "succeeded",
@@ -54,8 +87,16 @@ export const Constants = {
   // Stripe Customer Link
   StripeCreateCustomerLinkMissingEmailMsg:
     "problem creating customer, missing email",
+  StripeCreateCustomerLinkMissingStripeCustomerId:
+    "problem creating customer, missing stripe customer id",
   StripeCreateCustomerLinkSuccessMsg:
     "Processing creating stripe customer link for provided email address",
+
+  // Stripe One Time Payment Related Messages
+  StripeCreateCustomerId:
+    "Successfully created new customer id for one time payment",
+  StripeOneTimePaymentMsgSuccess:
+    "Successfully created new session for one time payment",
 
   // Subscription Related Messages
   SubscriptionDetailsUpdatedSuccessMsg:
@@ -70,11 +111,14 @@ export const Constants = {
     "Successfully completed checkout session for subscription",
   SubscriptionPaymentErrorMsg: "Payment failed for selected subscription.",
   SubscriptionNotificationSuccessMsg: "Unable to send email notification",
-  SubscriptionNotificationFailureErrorMsg: "Unable to send email notification",
   SubscriptionFailureMessage: "Unable to update user subscription",
+  FailedToSendEmailNotification: "Failed to send email notification ",
+  FailedToCreateOnetimePaymentSession:
+    "Failed to create one time payment session ",
 
   // Common Error Messages
   MethodNotAllowed: "Method not allowed",
+  FailedToProcessDataError: "Failed to process data",
   InvalidRequest: "Invalid request detected",
   MethodNotAuthorized: "Method not authorized",
   MissingRequiredFields: "Missing required fields",

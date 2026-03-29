@@ -105,6 +105,7 @@ export const handler = async (event) => {
         rentMonth,
         createdBy,
         rentAmount,
+        note: note, // description of charge
         customEventType: StripeOnetimePaymentEnumValue,
       },
     });

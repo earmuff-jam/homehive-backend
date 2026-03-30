@@ -2,12 +2,16 @@
  * File : 0026_fetch_raspy_solution.js
  *
  * This file is used to send and recieve question and
- * answer to AI chat Raspy.
+ * answer to Raspy AI.
  *
  * Must have feature flags enabled
  */
 import { Constants } from "./utils/constants";
-import { GrokModelProps, IntentEnumValues } from "./utils/raspy/config";
+import {
+  GrokModelProps,
+  IntentEnumValues,
+  PropertyOverviewEnumValue,
+} from "./utils/raspy/config";
 import {
   RaspyAIDevTestDataset,
   RaspyAIResponseSchemaOriginalArgs,
@@ -49,7 +53,6 @@ export const handler = async (event) => {
       properties = [],
       rents = [],
       tenants = [],
-      updatedOn,
     } = JSON.parse(event.body);
 
     if (!email || !intent) {

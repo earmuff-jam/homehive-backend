@@ -313,6 +313,67 @@ export const sanitizeApiFields = (obj = {}) =>
 // defines a function that selects one item at random from a list
 export const pickRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
+const testDataMonthLabels = Array.from({ length: 7 }, (_, element) =>
+  dayjs()
+    .add(element - 3, "month")
+    .format("MMM"),
+);
+
+const testDataBackgroundColors = [
+  "rgba(255, 99, 132, 0.5)",
+  "rgba(255, 159, 64, 0.5)",
+  "rgba(255, 205, 86, 0.5)",
+  "rgba(75, 192, 192, 0.5)",
+  "rgba(54, 162, 235, 0.5)",
+];
+
+// generateRandomTESTTODOFIXLATER ...
+// defines a function that creates some random
+// data points and creates series dataset. Creates
+// dataset between 890 && 6000
+const generateRandomTESTTODOFIXLATER = (max = 6000, min = 890) => {
+  const baseAmount = Math.floor(Math.random() * (max - min)) + min;
+
+  const historicalValues = [
+    baseAmount * 0.7,
+    baseAmount * 0.85,
+    baseAmount * 0.95,
+    baseAmount,
+  ].map((v) => Math.round(v));
+
+  const forecast = projectFuture(historicalValues, 3);
+
+  return [labels, historicalValues, forecast];
+};
+
+// generateRandomRentalIncomeDatapoints ...
+// defines a function that creates some random data points for the
+// projected yearly rent dataset
+const generateRandomRentalIncomeDatapoints = (max = 6000, min = 890) => {
+  const values = labels.map(
+    () => Math.floor(Math.random() * (max - min + 1)) + min,
+  );
+  return [labels, values, backgroundColors];
+};
+
+// normalizeRentalIncomePropertyChartDataset ...
+// defines a function that creates a dataset for line chart
+export const normalizeRentalIncomePropertyChartDataset = (
+  properties = [],
+  rents = [],
+  isTestEnv = false,
+) => {
+  if (isTestEnv) return generateRandomRentalIncomeDatapoints();
+
+  if (properties.length <= 0 || rents.length <= 0) {
+    return [];
+  }
+
+  const values = [];
+
+  return [labels, values, backgroundColors];
+};
+
 export const DocumentOnePageSchema = [
   // ===== PAGE 1 =====
   ["1owner", "string"],

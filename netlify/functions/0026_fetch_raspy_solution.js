@@ -25,6 +25,36 @@ const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY,
 });
 
+// populatePortfolioHealth ...
+// calculates the values for portfolio health ...
+const populatePortfolioHealth = (properties) => {
+  const filter = (arr, condition) =>
+    arr.filter((el) => el[condition])?.length || 0;
+  return {
+    totalProperties: properties?.length || 0,
+    vacantProperties: filter(properties, rentee),
+    activeProperties: filter(properties, isDeleted),
+  };
+};
+
+// populateFinancialHealth ...
+// defines the values for financial health ...
+const populateFinancialHealth = (properties) => {
+  const totalMonthlyRentalIncome = properties.reduce((acc, element) => {
+    return acc + Number(element.amount);
+  }, 0);
+
+  const totalSecurityDepositsCollected = properties?.reduce((acc, el) => {
+    return acc + Number(el.securityDeposit);
+  });
+
+  return {
+    totalMonthlyRentIncome: totalMonthlyRentalIncome,
+    averageRentalYield: filter(properties, rentee),
+    securityDepositsCollected: totalSecurityDepositsCollected,
+  };
+};
+
 export const handler = async (event) => {
   const isValidRequest = validateRequest(event.headers["x-api-key"]);
   if (!isValidRequest) {
@@ -117,8 +147,7 @@ export const handler = async (event) => {
           Tenants: ${JSON.stringify(tenants)}
           Rents: ${JSON.stringify(rents)}
           
-          MUST return JSON matching EXACTLY this structure keys:
-          ${JSON.stringify(keys)}
+          Return averageRentalYield and Provide recommended actions to take.
           `,
         },
       ],
@@ -134,7 +163,13 @@ export const handler = async (event) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        ...rawReplyJson,
+        ...{
+          portfolioHealth: populatePortfolioHealth(),
+          financialHealth: populateFinancialHealth(),
+          projectedYearlyChange: "",
+          projectedYearlyRent: "",
+          recommendedActions: rawReplyJson?.recommendedActions || [],
+        },
       }),
     };
   } catch (err) {

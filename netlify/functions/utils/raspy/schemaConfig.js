@@ -62,7 +62,8 @@ const generateRandomProjectedRentalChangeSeriesData = (
       .format("MMM"),
   );
 
-  return [labels, historicalValues, forecast];
+  return [...historicalValues, ...forecast];
+  // return [labels, historicalValues, forecast];
 };
 
 // generateRandomYearlyProjectionPieData ...
@@ -87,7 +88,8 @@ const generateRandomYearlyProjectionPieData = (max = 6000, min = 890) => {
     "rgba(54, 162, 235, 0.5)",
   ];
 
-  return [labels, values, backgroundColors];
+  return [values];
+  // return [labels, values, backgroundColors];
 };
 
 // DefaultProjectedRentalChangeResponseSchema ...

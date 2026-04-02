@@ -116,7 +116,14 @@ export const Constants = {
   FailedToCreateOnetimePaymentSession:
     "Failed to create one time payment session ",
 
-  // Common Error Messages
+  // Esign Form Related Messages
+  ProcessingEsignRequest: "Starting processing handler for Esign request",
+  CompletedScanMessage: "Completed full scan of pdf document.",
+  FailedToProcessDocument: "Failed to process provided document.",
+  FailedToReceievePdf: "Unable to fetch selected pdf",
+  EsignSentSuccessfully: "Signature request was sent successfully",
+
+  // Common Messages
   MethodNotAllowed: "Method not allowed",
   FailedToProcessDataError: "Failed to process data",
   InvalidRequest: "Invalid request detected",

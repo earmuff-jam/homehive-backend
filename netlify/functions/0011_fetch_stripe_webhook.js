@@ -12,6 +12,7 @@ import dayjs from "dayjs";
 
 import { Constants } from "./utils/constants";
 import {
+  RentAppSubscriptionStatusEnumValues,
   StripeOnetimePaymentEnumValue,
   StripeWebhookEnumValues,
   populateCorsHeaders,
@@ -53,10 +54,10 @@ export const handler = async (event) => {
 // handleStripeEventChargeCodes ...
 // defines a function that is used to update stripe payment services
 // based on various associations made by stripe payment services.
-const handleStripeEventChargeCodes = (stripeEventType, session) => {
-  switch (stripeEventType) {
+const handleStripeEventChargeCodes = (type, data) => {
+  switch (type) {
     // Subscription Intents
-    case StripeWebhookEnumValues.CustomerSubscriptionCreated:
+    case StripeWebhookEnumValues.CustomerSubscriptionCreated: {
       console.debug(Constants.SubscriptionCreatedSuccessMsg);
       const subscriptionItem = data?.items.data[0];
       processSubscriptionData(type, {
@@ -69,14 +70,14 @@ const handleStripeEventChargeCodes = (stripeEventType, session) => {
         stripeCustomerEmail: "", // display intent
         createdOn: dayjs().toISOString(),
       });
-
       break;
+    }
 
     // stripeInvoiceId and stripeCustomerEmail here are not present.
     // this is by stripe design. does not affect structural change
     // for subscription handler. no subscriptionStatus enum value
     // since we retain validity till payment completion
-    case StripeWebhookEnumValues.CustomerSubscriptionUpdated:
+    case StripeWebhookEnumValues.CustomerSubscriptionUpdated: {
       console.debug(Constants.SubscriptionUpdatedSuccessMsg);
 
       const subsItem = data?.items.data[0];
@@ -115,31 +116,29 @@ const handleStripeEventChargeCodes = (stripeEventType, session) => {
       });
 
       break;
+    }
 
     // Checkout Session events
     case StripeWebhookEnumValues.CheckoutSessionCompleted:
-      if (session?.payment_status !== Constants.StripePaymentStatusCompleted) {
+      if (data?.payment_status !== Constants.StripePaymentStatusCompleted) {
         console.debug(Constants.StripePaymentStatusError);
         return;
       }
 
       console.debug(Constants.StripeCheckoutSessionCompleted);
-
-      processVariousCheckoutSessions(stripeEventType, session);
+      processVariousCheckoutSessions(type, data);
 
       break;
 
     case StripeWebhookEnumValues.CheckoutSessionAsyncPaymentSucceeded:
       console.debug(Constants.StripeCheckoutSessionAsyncPaymentSucceeded);
-
-      processVariousCheckoutSessions(stripeEventType, session);
+      processVariousCheckoutSessions(type, data);
 
       break;
 
     case StripeWebhookEnumValues.CheckoutSessionAsyncPaymentFailed:
       console.debug(Constants.StripeCheckoutSessionAsyncPaymentFailed);
-
-      processVariousCheckoutSessions(stripeEventType, session);
+      processVariousCheckoutSessions(type, data);
 
       break;
 
@@ -149,13 +148,12 @@ const handleStripeEventChargeCodes = (stripeEventType, session) => {
       console.debug(Constants.SubscriptionPaymentSuccessMsg);
 
       processSubscriptionData(type, {
-        stripeSubscriptionId:
-          session?.parent?.subscription_details?.subscription,
-        subscriptionAmount: session?.total,
-        subscriptionStatus: session?.status,
-        stripeInvoiceId: session?.lines?.data[0].invoice, // users can only select monthly plan or yearly plan
-        stripeCustomerId: session.customer,
-        stripeCustomerEmail: session.customer_email,
+        stripeSubscriptionId: data?.parent?.subscription_details?.subscription,
+        subscriptionAmount: data?.total,
+        subscriptionStatus: data?.status,
+        stripeInvoiceId: data?.lines?.data[0].invoice, // users can only select monthly plan or yearly plan
+        stripeCustomerId: data.customer,
+        stripeCustomerEmail: data.customer_email,
         updatedOn: dayjs().toISOString(),
         updateExtraCollection: ["users"], // server representation of additional tables to update
       });
@@ -166,8 +164,8 @@ const handleStripeEventChargeCodes = (stripeEventType, session) => {
       console.debug(Constants.SubscriptionPaymentErrorMsg);
 
       processSubscriptionData(type, {
-        stripeCustomerId: session.customer,
-        stripeSubscriptionId: session.subscription,
+        stripeCustomerId: data.customer,
+        stripeSubscriptionId: data.subscription,
         subscriptionStatus:
           RentAppSubscriptionStatusEnumValues.SubscriptionPastDue,
         updatedOn: dayjs().toISOString(),
@@ -178,7 +176,7 @@ const handleStripeEventChargeCodes = (stripeEventType, session) => {
     // Default
     default:
       /* eslint-disable no-console */
-      console.debug(Constants.StripeNoMatchingWebhookValue, stripeEventType);
+      console.debug(Constants.StripeNoMatchingWebhookValue, type);
       break;
   }
 };
@@ -186,22 +184,22 @@ const handleStripeEventChargeCodes = (stripeEventType, session) => {
 //  processVariousCheckoutSessions ...
 // defines a function that attempts to check if the payment
 // is of a subscription mode or regular rental payments mode
-const processVariousCheckoutSessions = (stripeEventType, session) => {
-  if (session.mode === "subscription") {
+const processVariousCheckoutSessions = (type, data) => {
+  if (data.mode === "subscription") {
     console.debug(Constants.StripeCheckoutSessionSubscriptionMode);
-    const formattedNumber = Number(session?.metadata?.productCost ?? 0) / 100;
+    const formattedNumber = Number(data?.metadata?.productCost ?? 0) / 100;
     processSubscriptionData(type, {
-      stripeSubscriptionId: session.subscription,
+      stripeSubscriptionId: data.subscription,
       subscriptionAmount: formattedNumber,
-      subscriptionProductName: session?.metadata?.productName,
-      subscriptionStatus: session?.payment_status,
-      stripeInvoiceId: session?.invoice,
-      stripeCustomerId: session.customer,
-      stripeCustomerEmail: session.metadata?.customer_email,
+      subscriptionProductName: data?.metadata?.productName,
+      subscriptionStatus: data?.payment_status,
+      stripeInvoiceId: data?.invoice,
+      stripeCustomerId: data.customer,
+      stripeCustomerEmail: data.metadata?.customer_email,
     });
   } else {
     console.debug(Constants.StripeCheckoutSessionRentPaymentMode);
-    processRentalPaymentsData(stripeEventType, session);
+    processRentalPaymentsData(type, data);
   }
 };
 
@@ -253,6 +251,7 @@ const processRentalPaymentsData = async (stripeEventType, data) => {
   try {
     // handle events with session metadata differently
     if (data?.metadata) {
+      const metadata = data?.metadata;
       const {
         propertyId,
         propertyOwnerId,
@@ -264,12 +263,11 @@ const processRentalPaymentsData = async (stripeEventType, data) => {
         rentMonth,
         tenantId,
         note,
-        customEventType,
-      } = data?.metadata;
+      } = metadata;
 
       const stripePaymentIntentID = data?.payment_intent;
 
-      if (customEventType === StripeOnetimePaymentEnumValue) {
+      if (stripeEventType === StripeOnetimePaymentEnumValue) {
         // demonstrates one time payment made by tenant to property owner
         const draftData = {
           tenantId,
@@ -284,11 +282,11 @@ const processRentalPaymentsData = async (stripeEventType, data) => {
           stripeEventType,
           paymentMethodType: Object.keys(data.payment_method_options)[0],
           createdBy: tenantId, // tenant is the only one who can pay
-          note, // description of charge
+          note: note, // description of charge
           createdOn: dayjs().toISOString(),
           updatedBy: tenantId,
           updatedOn: dayjs().toISOString(),
-          customEventType,
+          customEventType: stripeEventType,
         };
         const response = await fetch(
           `${process.env.SITE_URL}/.netlify/functions/0012_update_stripe_payments`,

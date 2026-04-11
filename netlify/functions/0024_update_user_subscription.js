@@ -20,7 +20,7 @@ const IntegrationKey = process.env.INTEGRATION_KEY;
 
 export const handler = async (event) => {
   if (!isDevEnv && event.queryStringParameters?.key !== AdminAuthorizedKey) {
-    console.error(Constants.MethodNotAuthorized);
+    console.debug(Constants.MethodNotAuthorized);
     return {
       statusCode: 401,
       headers: {
@@ -39,7 +39,7 @@ export const handler = async (event) => {
       !data?.stripeCustomerId ||
       !data?.stripeSubscriptionId
     ) {
-      console.error(Constants.MissingRequiredFields);
+      console.debug(Constants.MissingRequiredFields);
       return false;
     }
 
@@ -124,7 +124,7 @@ export const handler = async (event) => {
       );
 
       if (!response.ok) {
-        console.error(Constants.FailedToSendEmailNotification);
+        console.debug(Constants.FailedToSendEmailNotification);
         // eat the exception
         return {
           statusCode: 500,

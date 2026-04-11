@@ -1,18 +1,13 @@
 /**
  * File : 0006_fetch_stripe_recent_transactions.js
  *
- * This file is used to allow property owners and tenants to view their recent trasactions
- * safely.
+ * This file is used to display recent stripe transactions made by the
+ * selected user
  *
  * Must have feature flags enabled for this feature.
  */
 import { Constants } from "./utils/constants";
-import { validateRequest } from "./utils/utils";
-import Stripe from "stripe";
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: process.env.STRIPE_API_VERSION,
-});
+import { populateCorsHeaders, validateRequest } from "./utils/utils";
 
 /**
  * handler fn

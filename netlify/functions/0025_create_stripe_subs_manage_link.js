@@ -36,7 +36,7 @@ export const handler = async (event) => {
     const { customerId } = JSON.parse(event.body);
 
     if (!customerId) {
-      console.error(Constants.MissingRequiredFields);
+      console.debug(Constants.MissingRequiredFields);
       return {
         statusCode: 401,
         headers: populateCorsHeaders(),

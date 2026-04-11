@@ -117,14 +117,14 @@ export const handler = async (event) => {
       }),
     };
   } catch (error) {
-    console.error(
-      "failed to process stripe payment confirmation. details ",
-      error,
-    );
+    console.debug(Constants.StripeFailedToProcessPaymentConfirmation, error);
     return {
       statusCode: 500,
       headers: populateCorsHeaders(),
-      body: JSON.stringify({ error: error.message }),
+      body: JSON.stringify({
+        error: Constants.StripeFailedToProcessPaymentConfirmation,
+        errorDetails: error.message,
+      }),
     };
   }
 };

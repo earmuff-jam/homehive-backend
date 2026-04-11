@@ -45,7 +45,7 @@ export const handler = async (event) => {
     const { email, message } = JSON.parse(event.body);
 
     if (!email || !message) {
-      console.error(Constants.MissingRequiredFields);
+      console.debug(Constants.MissingRequiredFields);
       return {
         statusCode: 401,
         headers: populateCorsHeaders(),

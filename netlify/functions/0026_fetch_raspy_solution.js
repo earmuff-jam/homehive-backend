@@ -49,11 +49,10 @@ export const handler = async (event) => {
       properties = [],
       rents = [],
       tenants = [],
-      updatedOn,
     } = JSON.parse(event.body);
 
     if (!email || !intent) {
-      console.error(Constants.MissingRequiredFields);
+      console.debug(Constants.MissingRequiredFields);
       return {
         statusCode: 401,
         headers: populateCorsHeaders(),

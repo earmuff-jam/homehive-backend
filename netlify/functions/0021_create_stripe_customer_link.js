@@ -8,7 +8,7 @@
  * Must have feature flags enabled for this feature.
  */
 import { Constants } from "./utils/constants";
-import { validateRequest } from "./utils/utils";
+import { populateCorsHeaders, validateRequest } from "./utils/utils";
 import Stripe from "stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {

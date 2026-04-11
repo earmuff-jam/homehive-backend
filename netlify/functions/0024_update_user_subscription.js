@@ -62,8 +62,8 @@ export const handler = async (event) => {
     const shouldPublishEmailNotification = isDevEnv
       ? false
       : ["invoice.payment_failed", "checkout.session.completed"].includes(
-        sanitizedSubscriptionData?.stripeEventType,
-      );
+          sanitizedSubscriptionData?.stripeEventType,
+        );
 
     const docRef = db
       .collection("subscriptionPayments")
@@ -124,7 +124,7 @@ export const handler = async (event) => {
       );
 
       if (!response.ok) {
-        console.error(Constants.FailedToSendEmailNotification);
+        console.debug(Constants.FailedToSendEmailNotification);
         // eat the exception
         return {
           statusCode: 500,

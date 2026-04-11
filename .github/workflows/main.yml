@@ -27,4 +27,4 @@ jobs:
           npm run lint
       - name: Run prettier checks
         run: |
-          npm run check
+          npm run prettierc

@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "lint": "eslint .",
-    "fix": "prettier --write .",
-    "check": "prettier --check .",
+    "prettierw": "prettier --write .",
+    "prettierc": "prettier --check .",
     "debug": "netlify dev --inspect",
     "analyzer": "npx vite-bundle-visualizer"
   },

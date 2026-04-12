@@ -87,8 +87,8 @@ export const handler = async (event) => {
           quantity: 1,
         },
       ],
-      success_url: process.env.STRIPE_RETURN_URL,
-      cancel_url: process.env.STRIPE_REFRESH_URL,
+      success_url: process.env.BASE_SERVICE_URL + "/rent/settings?success=1",
+      cancel_url: process.env.BASE_SERVICE_URL + "/rent/settings?refresh=1",
       metadata: {
         customer_email: email, // customer_email for stripe metadata
         userId,

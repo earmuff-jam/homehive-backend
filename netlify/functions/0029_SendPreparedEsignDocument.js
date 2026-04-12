@@ -6,8 +6,15 @@
  *
  * Must have feature flags enabled
  */
+import dayjs from "dayjs";
+
 import { Constants } from "./utils/constants";
-import { populateCorsHeaders, validateRequest } from "./utils/utils";
+import {
+  EsignTokenPriceMap,
+  initializeFirebase,
+  populateCorsHeaders,
+  validateRequest,
+} from "./utils/utils";
 import { SignatureRequestApi } from "@dropbox/sign";
 import Busboy from "busboy";
 import fs from "fs";
@@ -17,6 +24,7 @@ const client = new SignatureRequestApi();
 client.username = process.env.ESIGN_API_KEY;
 
 const isDevEnv = process.env.DEV_ENV === "true";
+const IntegrationKey = process.env.INTEGRATION_KEY;
 
 export const handler = async (event) => {
   const isValidRequest = validateRequest(event.headers["x-api-key"]);
@@ -138,14 +146,27 @@ export const handler = async (event) => {
 
     if (formFieldsPerDocument && formFieldsPerDocument.length > 0) {
       requestData.formFieldsPerDocument = formFieldsPerDocument;
-      console.debug(
-        "FINAL REQUEST FORM FIELDS:",
-        JSON.stringify(requestData.formFieldsPerDocument, null, 2),
-      );
     }
 
     const response = await client.signatureRequestSend(requestData);
     console.debug(Constants.EsignSentSuccessfully);
+
+    // used to consume the token for ETSS
+    const data = {
+      consumedTokens: 1,
+      userId: fields?.userId,
+      stripeCustomerEmail: fields?.stripeCustomerEmail,
+      method: "stripe",
+      status: "complete", // the status of the purchase
+      createdBy: fields?.userId, // the person who paid for the charge
+      note: "Consumed ETSS token",
+      createdOn: dayjs().toISOString(),
+      updatedBy: fields?.userId,
+      updatedOn: dayjs().toISOString(),
+    };
+
+    const tokenConsumedResponse = await consumeETSSToken(data);
+    console.debug(Constants.ETSSTokenConsumedSuccessfully);
 
     return {
       statusCode: 200,
@@ -156,6 +177,7 @@ export const handler = async (event) => {
       body: JSON.stringify({
         code: 200,
         message: "Signature request sent",
+        consumedTokens: tokenConsumedResponse?.consumedTokens,
         signatureRequestId: response?.signatureRequest?.signatureRequestId,
       }),
     };
@@ -182,4 +204,107 @@ export const handler = async (event) => {
       }
     }
   }
+};
+
+// consumeETSSToken ...
+// defines a function that consumes the token so that the Esign documents can be
+// transported across the a/o
+const consumeETSSToken = async (data) => {
+  try {
+    console.debug(Constants.StripeETSSConsumeTokenInit);
+    const db = initializeFirebase(isDevEnv);
+
+    const docRef = await db.collection("etssPayments").add({
+      consumedTokens: data?.consumedTokens ?? 1, // default to 1 if not provided
+      userId: data?.userId,
+      stripeCustomerEmail: data?.stripeCustomerEmail,
+      method: "stripe",
+      status: "complete",
+      type: "consume",
+      source: "esign-send",
+      note: "Consumed ETSS token",
+      createdBy: data?.userId,
+      createdOn: dayjs().toISOString(),
+      updatedBy: data?.userId,
+      updatedOn: dayjs().toISOString(),
+    });
+
+    console.debug(
+      `${Constants.ETSSTokenConsumedSuccessfully} | docId: ${docRef.id}`,
+    );
+
+    processEmailService({
+      ...data,
+      consumedTokens: data?.consumedTokens ?? 1,
+    }).catch((err) => console.debug(Constants.EmailFailedResponse, err));
+
+    return {
+      success: true,
+      consumedTokens: data?.consumedTokens ?? 1,
+      docId: docRef.id,
+    };
+  } catch (err) {
+    console.debug(Constants.FailedToProcessDocument, err);
+
+    return {
+      success: false,
+      error: err.message,
+    };
+  }
+};
+
+// processEmailService ...
+// defines a function that is used to process data to the email service
+const processEmailService = async (data) => {
+  const generatedMsg = generateMessageBody(
+    data?.consumedTokens,
+    EsignTokenPriceMap.BASIC, // basic token to ack 1 token per activity
+  );
+
+  const response = await fetch(
+    `${process.env.SITE_URL}/.netlify/functions/0001_send_email_fn`,
+    {
+      method: "POST",
+      headers: {
+        ...populateCorsHeaders(),
+        "x-api-key": IntegrationKey,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        to: data?.stripeCustomerEmail,
+        subject: "Notification of consumed tokens",
+        text: generatedMsg,
+      }),
+    },
+  );
+
+  if (!response.ok) {
+    console.debug(
+      "unable to send email notification from stripe webhook handler.",
+    );
+    // eat the exception
+    return;
+  }
+};
+
+// generateMessageBody ...
+// defines a function that is used to generate message body text for ETSS handler
+// used to populate email notification. tokenCost is basic token from EsignTokenPriceMap
+// since we do not have ability to consume multiple tokens at this time.
+const generateMessageBody = (tokens, tokenCost) => {
+  const draftMessage = `
+Dear customer,
+
+Attached is your notification of token consumption.
+
+  Payment Date: ${dayjs().format("DD-MM-YYYY")}
+  Token: ${tokens}
+  Token Cost: $${tokenCost}
+
+  Thank you,
+
+This is an auto-generated email. Please do not reply to this email.
+  `;
+
+  return draftMessage;
 };

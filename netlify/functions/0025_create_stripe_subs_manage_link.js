@@ -46,7 +46,7 @@ export const handler = async (event) => {
 
     const session = await stripe.billingPortal.sessions.create({
       customer: customerId,
-      return_url: process.env.STRIPE_RETURN_URL,
+      return_url: process.env.BASE_SERVICE_URL + "/rent/settings?success=1",
     });
 
     return {

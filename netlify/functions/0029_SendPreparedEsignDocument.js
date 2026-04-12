@@ -80,7 +80,7 @@ export const handler = async (event) => {
         });
 
         file.on("error", (err) => {
-          console.error("File stream error:", err);
+          console.debug("File stream error:", err);
           reject(err);
         });
       });
@@ -160,7 +160,7 @@ export const handler = async (event) => {
       }),
     };
   } catch (err) {
-    console.error(Constants.FailedToProcessDocument, err);
+    console.debug(Constants.FailedToProcessDocument, err);
 
     return {
       statusCode: 500,
@@ -177,7 +177,9 @@ export const handler = async (event) => {
     if (tempFilePath) {
       try {
         await fs.promises.unlink(tempFilePath);
-      } catch (err) {}
+      } catch (err) {
+        console.debug(Constants.FailedToProcessDocument, err);
+      }
     }
   }
 };

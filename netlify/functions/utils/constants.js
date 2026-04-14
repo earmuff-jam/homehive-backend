@@ -61,8 +61,8 @@ export const Constants = {
     "Processing stripe payment services for checkout session intent with complete stamp.",
   StripeCheckoutSessionSubscriptionMode:
     "Detected subscription mode, registering as a subscription service",
-  StripeCheckoutSessionRentPaymentMode:
-    "Detected rental payments mode, registering as a rent payment service",
+  StripeCheckoutSessionRentOrOneTimePaymentMode:
+    "Detected rental payment or one time payment mode, registering as a rent payment service",
   StripeCheckoutSessionETSSPaymentMode:
     "Detected ETSS token purchase, registering as a ETSS token payment service",
   StripeCheckoutSessionAsyncPaymentSucceeded:
@@ -112,9 +112,17 @@ export const Constants = {
   StripeCreateCustomerId:
     "Successfully created new customer id for one time payment",
   StripeOneTimePaymentInit: "Creating new session for one time payment",
+  StripeOneTimePaymentUpdateDbMsg:
+    "Updating database for one time payment event",
+  StripeRegularRentPaymentUpdateDbMsg:
+    "Updating database for rental payments event",
   StripeOneTimePaymentFailed: "Failed to process one time payment",
   StripeOneTimePaymentMsgSuccess:
     "Successfully created new session for one time payment",
+  StripeUpdateDbWithOneTimePaymentEvent:
+    "Updating database with handler for one time payment",
+  StripeUpdateDbWithRentPaymentEvent:
+    "Updating database with handler for rental payment services",
 
   // Stripe Rental Payments Related Messages
   StripeRentalPaymentsInit:

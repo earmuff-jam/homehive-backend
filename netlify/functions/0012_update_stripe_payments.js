@@ -42,13 +42,12 @@ export const handler = async (event) => {
       .collection(draftCollection)
       .doc(data.stripePaymentIntentID);
 
+    console.debug("wat", isOnetimePayment, JSON.stringify(data));
     if (isOnetimePayment) {
-      const formattedData = {
-        ...data,
-        rentMonth: "-",
-      };
-      await docRef.set(formattedData, { merge: true });
+      console.debug(Constants.StripeOneTimePaymentUpdateDbMsg);
+      await docRef.set(data, { merge: true });
     } else {
+      console.debug(Constants.StripeRegularRentPaymentUpdateDbMsg);
       await docRef.set(data, { merge: true });
     }
 

@@ -27,12 +27,12 @@ export const handler = async (event) => {
   let stripeEvent;
 
   try {
-    console.debug(Constants.StripeEventHandlerInit);
     stripeEvent = stripe.webhooks.constructEvent(
       event.body,
       sig,
       process.env.STRIPE_WEBHOOK_SECRET,
     );
+    console.debug(Constants.StripeEventHandlerInit, stripeEvent?.type);
   } catch (err) {
     console.debug(Constants.StripeEventHandlerErrorMsg, err.message);
     return {
@@ -42,8 +42,11 @@ export const handler = async (event) => {
     };
   }
 
-  handleStripeEventChargeCodes(stripeEvent?.type, stripeEvent?.data?.object);
-  console.debug(Constants.StripeEventHandlerComplete);
+  await handleStripeEventChargeCodes(
+    stripeEvent?.type,
+    stripeEvent?.data?.object,
+  );
+  console.debug(Constants.StripeEventHandlerComplete, stripeEvent?.type);
 
   return {
     statusCode: 200,
@@ -55,13 +58,13 @@ export const handler = async (event) => {
 // handleStripeEventChargeCodes ...
 // defines a function that is used to update stripe payment services
 // based on various associations made by stripe payment services.
-const handleStripeEventChargeCodes = (type, data) => {
+const handleStripeEventChargeCodes = async (type, data) => {
   switch (type) {
     // Subscription Intents
     case StripeWebhookEnumValues.CustomerSubscriptionCreated: {
       console.debug(Constants.SubscriptionCreatedSuccessMsg);
       const subscriptionItem = data?.items.data[0];
-      processSubscriptionData(type, {
+      await processSubscriptionData(type, {
         stripeSubscriptionId: data?.id,
         subscriptionAmount: subscriptionItem?.plan?.amount,
         subscriptionStatus:
@@ -93,7 +96,7 @@ const handleStripeEventChargeCodes = (type, data) => {
           dayjs().toISOString(),
         );
 
-        processSubscriptionData(type, {
+        await processSubscriptionData(type, {
           stripeSubscriptionId: data?.id,
           subscriptionAmount: subsItem?.plan?.amount,
           subscriptionStatus:
@@ -109,7 +112,7 @@ const handleStripeEventChargeCodes = (type, data) => {
 
       console.debug(Constants.SubscriptionDetailsUpdatedSuccessMsg);
 
-      processSubscriptionData(type, {
+      await processSubscriptionData(type, {
         stripeSubscriptionId: data?.id,
         subscriptionAmount: data?.plan?.amount,
         stripeCustomerId: data.customer,
@@ -127,19 +130,19 @@ const handleStripeEventChargeCodes = (type, data) => {
       }
 
       console.debug(Constants.StripeCheckoutSessionCompleted);
-      processVariousCheckoutSessions(type, data);
+      await processVariousCheckoutSessions(type, data);
 
       break;
 
     case StripeWebhookEnumValues.CheckoutSessionAsyncPaymentSucceeded:
       console.debug(Constants.StripeCheckoutSessionAsyncPaymentSucceeded);
-      processVariousCheckoutSessions(type, data);
+      await processVariousCheckoutSessions(type, data);
 
       break;
 
     case StripeWebhookEnumValues.CheckoutSessionAsyncPaymentFailed:
       console.debug(Constants.StripeCheckoutSessionAsyncPaymentFailed);
-      processVariousCheckoutSessions(type, data);
+      await processVariousCheckoutSessions(type, data);
 
       break;
 
@@ -148,7 +151,7 @@ const handleStripeEventChargeCodes = (type, data) => {
       // only webhook that can setup stripe subscription; suggested by Stripe
       console.debug(Constants.SubscriptionPaymentSuccessMsg);
 
-      processSubscriptionData(type, {
+      await processSubscriptionData(type, {
         stripeSubscriptionId: data?.parent?.subscription_details?.subscription,
         subscriptionAmount: data?.total,
         subscriptionStatus: data?.status,
@@ -164,7 +167,7 @@ const handleStripeEventChargeCodes = (type, data) => {
     case StripeWebhookEnumValues.InvoicePaymentFailed:
       console.debug(Constants.SubscriptionPaymentErrorMsg);
 
-      processSubscriptionData(type, {
+      await processSubscriptionData(type, {
         stripeCustomerId: data.customer,
         stripeSubscriptionId: data.subscription,
         subscriptionStatus:
@@ -186,7 +189,7 @@ const handleStripeEventChargeCodes = (type, data) => {
 // defines a function that attempts to process various checkout sessions
 // used to denote if a handler request is of subscription, ETSS or Rental
 // payments type
-const processVariousCheckoutSessions = (type, data) => {
+const processVariousCheckoutSessions = async (type, data) => {
   if (data.mode === "subscription") {
     console.debug(Constants.StripeCheckoutSessionSubscriptionMode);
     const formattedNumber = Number(data?.metadata?.productCost ?? 0) / 100;
@@ -203,10 +206,10 @@ const processVariousCheckoutSessions = (type, data) => {
     const isETSSPurchase = data?.metadata?.eventType === ETSSEventType;
     if (isETSSPurchase) {
       console.debug(Constants.StripeCheckoutSessionETSSPaymentMode);
-      processETSSPurchaseData(type, data);
+      await processETSSPurchaseData(type, data);
     } else {
-      console.debug(Constants.StripeCheckoutSessionRentPaymentMode);
-      processRentalPaymentsData(type, data);
+      console.debug(Constants.StripeCheckoutSessionRentOrOneTimePaymentMode);
+      await processRentalPaymentsData(type, data);
     }
   }
 };
@@ -271,32 +274,36 @@ const processRentalPaymentsData = async (stripeEventType, data) => {
         rentMonth,
         tenantId,
         note,
+        customEventType,
       } = metadata;
 
       const stripePaymentIntentID = data?.payment_intent;
-
-      if (stripeEventType === StripeOnetimePaymentEnumValue) {
-        console.debug(Constants.StripeOneTimePaymentInit);
+      if (customEventType === StripeOnetimePaymentEnumValue) {
+        console.debug(Constants.StripeOneTimePaymentInit, customEventType);
         // demonstrates one time payment made by tenant to property owner
         const draftData = {
           tenantId,
           tenantEmail,
           propertyId,
           propertyOwnerId,
-          rentMonth,
-          rentAmount: Number(rentAmount) / 100, // stripe reads the amount in cents
+          rentMonth: "-",
+          rentAmount: Number(rentAmount),
           stripePaymentIntentID,
           method: "stripe",
           status: data.status,
-          stripeEventType,
           paymentMethodType: Object.keys(data.payment_method_options)[0],
           createdBy: tenantId, // tenant is the only one who can pay
           note: note, // description of charge
           createdOn: dayjs().toISOString(),
           updatedBy: tenantId,
           updatedOn: dayjs().toISOString(),
-          customEventType: stripeEventType,
+          customEventType,
         };
+
+        console.debug(
+          Constants.StripeUpdateDbWithOneTimePaymentEvent,
+          process.env.SITE_URL,
+        );
         const response = await fetch(
           `${process.env.SITE_URL}/.netlify/functions/0012_update_stripe_payments`,
           {
@@ -316,7 +323,7 @@ const processRentalPaymentsData = async (stripeEventType, data) => {
 
         return true;
       } else {
-        console.debug(Constants.StripeRentalPaymentsInit);
+        console.debug(Constants.StripeRentalPaymentsInit, stripeEventType);
         // demonstrates rental payments made by tenant to property owner
         const draftData = {
           tenantId,
@@ -324,10 +331,10 @@ const processRentalPaymentsData = async (stripeEventType, data) => {
           propertyId,
           propertyOwnerId,
           rentMonth,
-          rentAmount: Number(rentAmount) / 100, // stripe reads amount in cents
-          additionalCharges: Number(additionalCharges) / 100,
-          initialLateFee: Number(initialLateFee) / 100,
-          dailyLateFee: Number(dailyLateFee) / 100,
+          rentAmount: Number(rentAmount),
+          additionalCharges: Number(additionalCharges),
+          initialLateFee: Number(initialLateFee),
+          dailyLateFee: Number(dailyLateFee),
           stripePaymentIntentID,
           method: "stripe",
           status: data.status,
@@ -339,6 +346,10 @@ const processRentalPaymentsData = async (stripeEventType, data) => {
           updatedOn: dayjs().toISOString(),
         };
 
+        console.debug(
+          Constants.StripeUpdateDbWithRentPaymentEvent,
+          process.env.SITE_URL,
+        );
         const response = await fetch(
           `${process.env.SITE_URL}/.netlify/functions/0012_update_stripe_payments`,
           {
@@ -352,7 +363,10 @@ const processRentalPaymentsData = async (stripeEventType, data) => {
         );
 
         if (!response.ok) {
-          console.debug(Constants.StripeRentalPaymentsFailed);
+          console.debug(
+            Constants.StripeRentalPaymentsFailed,
+            response.statusText,
+          );
           throw new Error(`Failed to update DB: ${response.statusText}`);
         }
 
@@ -390,6 +404,7 @@ const processRentalPaymentsData = async (stripeEventType, data) => {
       return false;
     }
   } catch (err) {
+    console.error("processRentalPaymentsData error details:", err.message);
     console.error(Constants.StripeEventHandlerErrorMsg, err);
     return false;
   }

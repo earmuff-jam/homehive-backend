@@ -21,7 +21,7 @@
 //     };
 //   }
 
-//   if (event.httpMethod !== "POST" || event.httpMethod !== "OPTIONS") {
+//   if (event.httpMethod !== "POST" && event.httpMethod !== "OPTIONS") {
 //     console.debug(Constants.MethodNotAllowed);
 //     return {
 //       statusCode: 405,

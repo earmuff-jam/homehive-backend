@@ -38,6 +38,28 @@ export const ARPSReminderSettings = {
   GENERAL: [7, 3, 1, 0],
 };
 
+// EsignTokenPriceMap ...
+// defines the token price map settings for ETSS
+// amount is stored in dollars
+export const EsignTokenPriceMap = {
+  BASIC: 10,
+  PREMIUM: 20,
+  ULTRA: 50,
+};
+
+// EsignTokenPriceInCreditLabelMap ...
+// defines the token in credit amount; used to display for the
+// users. Reduces dependency on currency amount
+export const EsignTokenPriceInCreditLabelMap = {
+  BASIC: 1,
+  PREMIUM: 2,
+  ULTRA: 5,
+};
+
+// ETSSEventType ...
+// defines the electronic token service system in webhook handler
+export const ETSSEventType = "esign-token";
+
 // StripeOnetimePaymentEnumValue ...
 export const StripeOnetimePaymentEnumValue = "onetime.payment";
 

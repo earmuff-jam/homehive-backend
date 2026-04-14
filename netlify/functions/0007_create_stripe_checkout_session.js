@@ -126,9 +126,10 @@ export const handler = async (event) => {
           customer_email: tenantEmail,
         },
         success_url:
-          process.env.STRIPE_PAYMENT_SUCCESS_URL +
+          process.env.BASE_SERVICE_URL +
+          "/rent/rental?success=1" +
           "&session_id={CHECKOUT_SESSION_ID}",
-        cancel_url: process.env.STRIPE_PAYMENT_FAILURE_URL,
+        cancel_url: process.env.BASE_SERVICE_URL + "/rent/rental?refresh=1",
       },
       {
         stripeAccount: stripeOwnerAccountId, // session is created on behalf of the property owner

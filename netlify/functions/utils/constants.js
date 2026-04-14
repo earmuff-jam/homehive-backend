@@ -63,7 +63,8 @@ export const Constants = {
     "Detected subscription mode, registering as a subscription service",
   StripeCheckoutSessionRentPaymentMode:
     "Detected rental payments mode, registering as a rent payment service",
-
+  StripeCheckoutSessionETSSPaymentMode:
+    "Detected ETSS token purchase, registering as a ETSS token payment service",
   StripeCheckoutSessionAsyncPaymentSucceeded:
     "Processing stripe payment services for checkout async session intent with payments succeeded stamp.",
   StripeCheckoutSessionAsyncPaymentFailed:
@@ -80,12 +81,17 @@ export const Constants = {
     "No matching webhook value found for event type:",
   StripeSelectedCollectionInit:
     "No Metadata detected. Using collection for rental payment services",
+  StripeETSSCollectionInit:
+    "ETSS token system detected. Using collection for etss payment services",
+  StripeETSSConsumeTokenInit:
+    "Consuming ETSS Token for electronic payment services",
   StripeUpdateSelectedCollection:
     "Metadata detected. Using collection for storage services",
   StripePaymentStatusError:
     "Unable to process stripe payment services without correct payment status",
   StripeFailedToCreateCheckoutSession:
     "Failed to create stripe checkout session.",
+  StripeFailedToCreateETSSSession: "Failed to create stripe ETSS session.",
   StripeFailedToCreateAccount: "Failed to create stripe account",
   StripeFailedToProcessPaymentConfirmation:
     "Failed to process stripe payment confirmation",
@@ -132,8 +138,10 @@ export const Constants = {
   FailedToProcessDocument: "Failed to process provided document.",
   FailedToReceievePdf: "Unable to fetch selected pdf",
   EsignSentSuccessfully: "Signature request was sent successfully",
+  ETSSTokenConsumedSuccessfully: "One token was consumed successfully",
 
   // Common Messages
+  SuccessResponse: "Success",
   MethodNotAllowed: "Method not allowed",
   FailedToProcessDataError: "Failed to process data",
   InvalidRequest: "Invalid request detected",

@@ -12,6 +12,7 @@ import dayjs from "dayjs";
 
 import { Constants } from "./utils/constants";
 import {
+  ETSSEventType,
   RentAppSubscriptionStatusEnumValues,
   StripeOnetimePaymentEnumValue,
   StripeWebhookEnumValues,
@@ -182,8 +183,9 @@ const handleStripeEventChargeCodes = (type, data) => {
 };
 
 //  processVariousCheckoutSessions ...
-// defines a function that attempts to check if the payment
-// is of a subscription mode or regular rental payments mode
+// defines a function that attempts to process various checkout sessions
+// used to denote if a handler request is of subscription, ETSS or Rental
+// payments type
 const processVariousCheckoutSessions = (type, data) => {
   if (data.mode === "subscription") {
     console.debug(Constants.StripeCheckoutSessionSubscriptionMode);
@@ -198,8 +200,14 @@ const processVariousCheckoutSessions = (type, data) => {
       stripeCustomerEmail: data.metadata?.customer_email,
     });
   } else {
-    console.debug(Constants.StripeCheckoutSessionRentPaymentMode);
-    processRentalPaymentsData(type, data);
+    const isETSSPurchase = data?.metadata?.eventType === ETSSEventType;
+    if (isETSSPurchase) {
+      console.debug(Constants.StripeCheckoutSessionETSSPaymentMode);
+      processETSSPurchaseData(type, data);
+    } else {
+      console.debug(Constants.StripeCheckoutSessionRentPaymentMode);
+      processRentalPaymentsData(type, data);
+    }
   }
 };
 
@@ -378,6 +386,72 @@ const processRentalPaymentsData = async (stripeEventType, data) => {
         );
       }
       return false;
+    }
+  } catch (err) {
+    console.error(Constants.StripeEventHandlerErrorMsg, err);
+    return false;
+  }
+};
+
+// processETSSPurchaseData ...
+// defines a function that is used to process ETSS token webhook events
+const processETSSPurchaseData = async (stripeEventType, data) => {
+  if (
+    !stripeEventType ||
+    typeof data !== "object" ||
+    Object.keys(data).length === 0
+  ) {
+    console.debug(Constants.MissingRequiredFields);
+    return null;
+  }
+
+  try {
+    if (data?.metadata) {
+      const metadata = data?.metadata;
+      const { label, tokens, derievedPurchaseCost, userId, eventType } =
+        metadata;
+
+      const stripePaymentIntentID = data?.payment_intent;
+
+      const draftData = {
+        label,
+        tokens,
+        derievedPurchaseCost,
+        userId,
+        method: "stripe",
+        status: data.status,
+        stripeEventType: eventType,
+        stripeCustomerEmail: data?.customer_email,
+        stripePaymentIntentID: stripePaymentIntentID,
+        paymentMethodType: Object.keys(data.payment_method_options)[0],
+        createdBy: userId, // the person who paid for the charge
+        note: "Added ETSS token",
+        createdOn: dayjs().toISOString(),
+        updatedBy: userId,
+        updatedOn: dayjs().toISOString(),
+        customEventType: eventType,
+      };
+
+      // use a different handler fn to properly process
+      // ETSS payments
+      const response = await fetch(
+        `${process.env.SITE_URL}/.netlify/functions/0031_ProcessEsignToken`,
+        {
+          method: "POST",
+          headers: {
+            ...populateCorsHeaders(),
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(draftData),
+        },
+      );
+
+      if (!response.ok) {
+        console.error("failed to update db.");
+        throw new Error(`Failed to update DB: ${response.statusText}`);
+      }
+
+      return true;
     }
   } catch (err) {
     console.error(Constants.StripeEventHandlerErrorMsg, err);

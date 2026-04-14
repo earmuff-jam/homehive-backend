@@ -313,7 +313,7 @@ export const generateOnetimePaymentChargeNotification = (cost, link) => {
   Please ensure that all information is valid and correct.
 
   One time cost: $${cost}
-  Payment Link: $${link}
+  Payment Link: ${link}
 
   Please note that some transaction take couple of days to process fully.
 

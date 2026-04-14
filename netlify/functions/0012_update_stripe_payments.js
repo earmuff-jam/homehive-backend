@@ -18,22 +18,9 @@ import {
 } from "./utils/utils";
 
 const isDevEnv = process.env.DEV_ENV === "true";
-const AdminAuthorizedKey = process.env.ADMIN_KEY;
 const IntegrationKey = process.env.INTEGRATION_KEY;
 
 export const handler = async (event) => {
-  if (!isDevEnv && event.queryStringParameters?.key !== AdminAuthorizedKey) {
-    console.debug(Constants.MethodNotAuthorized);
-    return {
-      statusCode: 401,
-      headers: {
-        ...populateCorsHeaders(),
-        "Content-Type": "application/json",
-      },
-      body: Constants.MethodNotAuthorized,
-    };
-  }
-
   try {
     // if the "createdBy" column exists, we assume that the webhook request
     // contained metadata which needs to be stored and processed differently.

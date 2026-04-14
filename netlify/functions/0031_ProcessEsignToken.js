@@ -13,22 +13,9 @@ import { Constants } from "./utils/constants";
 import { initializeFirebase, populateCorsHeaders } from "./utils/utils";
 
 const isDevEnv = process.env.DEV_ENV === "true";
-const AdminAuthorizedKey = process.env.ADMIN_KEY;
 const IntegrationKey = process.env.INTEGRATION_KEY;
 
 export const handler = async (event) => {
-  if (!isDevEnv && event.queryStringParameters?.key !== AdminAuthorizedKey) {
-    console.debug(Constants.MethodNotAuthorized);
-    return {
-      statusCode: 401,
-      headers: {
-        ...populateCorsHeaders(),
-        "Content-Type": "application/json",
-      },
-      body: Constants.MethodNotAuthorized,
-    };
-  }
-
   try {
     const data = JSON.parse(event.body);
     console.debug(Constants.StripeETSSCollectionInit);

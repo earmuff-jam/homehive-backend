@@ -276,6 +276,7 @@ const processRentalPaymentsData = async (stripeEventType, data) => {
       const stripePaymentIntentID = data?.payment_intent;
 
       if (stripeEventType === StripeOnetimePaymentEnumValue) {
+        console.debug(Constants.StripeOneTimePaymentInit);
         // demonstrates one time payment made by tenant to property owner
         const draftData = {
           tenantId,
@@ -283,7 +284,7 @@ const processRentalPaymentsData = async (stripeEventType, data) => {
           propertyId,
           propertyOwnerId,
           rentMonth,
-          rentAmount,
+          rentAmount: Number(rentAmount) / 100, // stripe reads the amount in cents
           stripePaymentIntentID,
           method: "stripe",
           status: data.status,
@@ -309,12 +310,13 @@ const processRentalPaymentsData = async (stripeEventType, data) => {
         );
 
         if (!response.ok) {
-          console.error("failed to update db.");
+          console.debug(Constants.StripeOneTimePaymentFailed);
           throw new Error(`Failed to update DB: ${response.statusText}`);
         }
 
         return true;
       } else {
+        console.debug(Constants.StripeRentalPaymentsInit);
         // demonstrates rental payments made by tenant to property owner
         const draftData = {
           tenantId,
@@ -350,7 +352,7 @@ const processRentalPaymentsData = async (stripeEventType, data) => {
         );
 
         if (!response.ok) {
-          console.error("failed to update db.");
+          console.debug(Constants.StripeRentalPaymentsFailed);
           throw new Error(`Failed to update DB: ${response.statusText}`);
         }
 

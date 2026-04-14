@@ -111,8 +111,15 @@ export const Constants = {
   // Stripe One Time Payment Related Messages
   StripeCreateCustomerId:
     "Successfully created new customer id for one time payment",
+  StripeOneTimePaymentInit: "Creating new session for one time payment",
+  StripeOneTimePaymentFailed: "Failed to process one time payment",
   StripeOneTimePaymentMsgSuccess:
     "Successfully created new session for one time payment",
+
+  // Stripe Rental Payments Related Messages
+  StripeRentalPaymentsInit:
+    "Creating new session for rental payments from tenant",
+  StripeRentalPaymentsFailed: "Failed to process rental payments from tenant",
 
   // Subscription Related Messages
   SubscriptionDetailsUpdatedSuccessMsg:

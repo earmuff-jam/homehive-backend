@@ -274,7 +274,7 @@ const processRentalPaymentsData = async (stripeEventType, data) => {
       } = metadata;
 
       const stripePaymentIntentID = data?.payment_intent;
-
+      console.debug(stripeEventType);
       if (stripeEventType === StripeOnetimePaymentEnumValue) {
         console.debug(Constants.StripeOneTimePaymentInit, stripeEventType);
         // demonstrates one time payment made by tenant to property owner
@@ -284,7 +284,7 @@ const processRentalPaymentsData = async (stripeEventType, data) => {
           propertyId,
           propertyOwnerId,
           rentMonth,
-          rentAmount: Number(rentAmount) / 100, // stripe reads the amount in cents
+          rentAmount: Number(rentAmount),
           stripePaymentIntentID,
           method: "stripe",
           status: data.status,
@@ -339,6 +339,7 @@ const processRentalPaymentsData = async (stripeEventType, data) => {
           updatedOn: dayjs().toISOString(),
         };
 
+        console.debug(process.env.SITE_URL);
         const response = await fetch(
           `${process.env.SITE_URL}/.netlify/functions/0012_update_stripe_payments`,
           {
@@ -352,7 +353,10 @@ const processRentalPaymentsData = async (stripeEventType, data) => {
         );
 
         if (!response.ok) {
-          console.debug(Constants.StripeRentalPaymentsFailed);
+          console.debug(
+            Constants.StripeRentalPaymentsFailed,
+            response.statusText,
+          );
           throw new Error(`Failed to update DB: ${response.statusText}`);
         }
 
@@ -390,6 +394,7 @@ const processRentalPaymentsData = async (stripeEventType, data) => {
       return false;
     }
   } catch (err) {
+    console.error("processRentalPaymentsData error details:", err.message);
     console.error(Constants.StripeEventHandlerErrorMsg, err);
     return false;
   }

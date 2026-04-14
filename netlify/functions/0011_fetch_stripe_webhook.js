@@ -276,7 +276,7 @@ const processRentalPaymentsData = async (stripeEventType, data) => {
       const stripePaymentIntentID = data?.payment_intent;
 
       if (stripeEventType === StripeOnetimePaymentEnumValue) {
-        console.debug(Constants.StripeOneTimePaymentInit);
+        console.debug(Constants.StripeOneTimePaymentInit, stripeEventType);
         // demonstrates one time payment made by tenant to property owner
         const draftData = {
           tenantId,
@@ -316,7 +316,7 @@ const processRentalPaymentsData = async (stripeEventType, data) => {
 
         return true;
       } else {
-        console.debug(Constants.StripeRentalPaymentsInit);
+        console.debug(Constants.StripeRentalPaymentsInit, stripeEventType);
         // demonstrates rental payments made by tenant to property owner
         const draftData = {
           tenantId,
@@ -324,10 +324,10 @@ const processRentalPaymentsData = async (stripeEventType, data) => {
           propertyId,
           propertyOwnerId,
           rentMonth,
-          rentAmount: Number(rentAmount) / 100, // stripe reads amount in cents
-          additionalCharges: Number(additionalCharges) / 100,
-          initialLateFee: Number(initialLateFee) / 100,
-          dailyLateFee: Number(dailyLateFee) / 100,
+          rentAmount: Number(rentAmount),
+          additionalCharges: Number(additionalCharges),
+          initialLateFee: Number(initialLateFee),
+          dailyLateFee: Number(dailyLateFee),
           stripePaymentIntentID,
           method: "stripe",
           status: data.status,

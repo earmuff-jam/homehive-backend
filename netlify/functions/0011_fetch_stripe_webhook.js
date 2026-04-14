@@ -42,7 +42,10 @@ export const handler = async (event) => {
     };
   }
 
-  handleStripeEventChargeCodes(stripeEvent?.type, stripeEvent?.data?.object);
+  await handleStripeEventChargeCodes(
+    stripeEvent?.type,
+    stripeEvent?.data?.object,
+  );
   console.debug(Constants.StripeEventHandlerComplete, stripeEvent?.type);
 
   return {
@@ -55,13 +58,13 @@ export const handler = async (event) => {
 // handleStripeEventChargeCodes ...
 // defines a function that is used to update stripe payment services
 // based on various associations made by stripe payment services.
-const handleStripeEventChargeCodes = (type, data) => {
+const handleStripeEventChargeCodes = async (type, data) => {
   switch (type) {
     // Subscription Intents
     case StripeWebhookEnumValues.CustomerSubscriptionCreated: {
       console.debug(Constants.SubscriptionCreatedSuccessMsg);
       const subscriptionItem = data?.items.data[0];
-      processSubscriptionData(type, {
+      await processSubscriptionData(type, {
         stripeSubscriptionId: data?.id,
         subscriptionAmount: subscriptionItem?.plan?.amount,
         subscriptionStatus:
@@ -93,7 +96,7 @@ const handleStripeEventChargeCodes = (type, data) => {
           dayjs().toISOString(),
         );
 
-        processSubscriptionData(type, {
+        await processSubscriptionData(type, {
           stripeSubscriptionId: data?.id,
           subscriptionAmount: subsItem?.plan?.amount,
           subscriptionStatus:
@@ -109,7 +112,7 @@ const handleStripeEventChargeCodes = (type, data) => {
 
       console.debug(Constants.SubscriptionDetailsUpdatedSuccessMsg);
 
-      processSubscriptionData(type, {
+      await processSubscriptionData(type, {
         stripeSubscriptionId: data?.id,
         subscriptionAmount: data?.plan?.amount,
         stripeCustomerId: data.customer,
@@ -127,19 +130,19 @@ const handleStripeEventChargeCodes = (type, data) => {
       }
 
       console.debug(Constants.StripeCheckoutSessionCompleted);
-      processVariousCheckoutSessions(type, data);
+      await processVariousCheckoutSessions(type, data);
 
       break;
 
     case StripeWebhookEnumValues.CheckoutSessionAsyncPaymentSucceeded:
       console.debug(Constants.StripeCheckoutSessionAsyncPaymentSucceeded);
-      processVariousCheckoutSessions(type, data);
+      await processVariousCheckoutSessions(type, data);
 
       break;
 
     case StripeWebhookEnumValues.CheckoutSessionAsyncPaymentFailed:
       console.debug(Constants.StripeCheckoutSessionAsyncPaymentFailed);
-      processVariousCheckoutSessions(type, data);
+      await processVariousCheckoutSessions(type, data);
 
       break;
 
@@ -148,7 +151,7 @@ const handleStripeEventChargeCodes = (type, data) => {
       // only webhook that can setup stripe subscription; suggested by Stripe
       console.debug(Constants.SubscriptionPaymentSuccessMsg);
 
-      processSubscriptionData(type, {
+      await processSubscriptionData(type, {
         stripeSubscriptionId: data?.parent?.subscription_details?.subscription,
         subscriptionAmount: data?.total,
         subscriptionStatus: data?.status,
@@ -164,7 +167,7 @@ const handleStripeEventChargeCodes = (type, data) => {
     case StripeWebhookEnumValues.InvoicePaymentFailed:
       console.debug(Constants.SubscriptionPaymentErrorMsg);
 
-      processSubscriptionData(type, {
+      await processSubscriptionData(type, {
         stripeCustomerId: data.customer,
         stripeSubscriptionId: data.subscription,
         subscriptionStatus:
@@ -186,7 +189,7 @@ const handleStripeEventChargeCodes = (type, data) => {
 // defines a function that attempts to process various checkout sessions
 // used to denote if a handler request is of subscription, ETSS or Rental
 // payments type
-const processVariousCheckoutSessions = (type, data) => {
+const processVariousCheckoutSessions = async (type, data) => {
   if (data.mode === "subscription") {
     console.debug(Constants.StripeCheckoutSessionSubscriptionMode);
     const formattedNumber = Number(data?.metadata?.productCost ?? 0) / 100;
@@ -203,10 +206,10 @@ const processVariousCheckoutSessions = (type, data) => {
     const isETSSPurchase = data?.metadata?.eventType === ETSSEventType;
     if (isETSSPurchase) {
       console.debug(Constants.StripeCheckoutSessionETSSPaymentMode);
-      processETSSPurchaseData(type, data);
+      await processETSSPurchaseData(type, data);
     } else {
       console.debug(Constants.StripeCheckoutSessionRentOrOneTimePaymentMode);
-      processRentalPaymentsData(type, data);
+      await processRentalPaymentsData(type, data);
     }
   }
 };

@@ -86,7 +86,7 @@ export const Constants = {
   StripeETSSConsumeTokenInit:
     "Consuming ETSS Token for electronic payment services",
   StripeUpdateSelectedCollection:
-    "Metadata detected. Using collection for storage services",
+    "Metadata detected. Using collection for rent services",
   StripePaymentStatusError:
     "Unable to process stripe payment services without correct payment status",
   StripeFailedToCreateCheckoutSession:

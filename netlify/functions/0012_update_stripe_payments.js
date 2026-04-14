@@ -31,10 +31,9 @@ export const handler = async (event) => {
     const isOnetimePayment =
       data?.customEventType === StripeOnetimePaymentEnumValue;
 
-    let draftCollection = "rentalPayments";
+    const draftCollection = "rents";
     console.debug(Constants.StripeSelectedCollectionInit);
     if (containsMetadata) {
-      draftCollection = "rents";
       console.debug(Constants.StripeUpdateSelectedCollection);
     }
 

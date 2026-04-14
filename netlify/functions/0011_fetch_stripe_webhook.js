@@ -27,12 +27,12 @@ export const handler = async (event) => {
   let stripeEvent;
 
   try {
-    console.debug(Constants.StripeEventHandlerInit);
     stripeEvent = stripe.webhooks.constructEvent(
       event.body,
       sig,
       process.env.STRIPE_WEBHOOK_SECRET,
     );
+    console.debug(Constants.StripeEventHandlerInit, stripeEvent?.type);
   } catch (err) {
     console.debug(Constants.StripeEventHandlerErrorMsg, err.message);
     return {
@@ -43,7 +43,7 @@ export const handler = async (event) => {
   }
 
   handleStripeEventChargeCodes(stripeEvent?.type, stripeEvent?.data?.object);
-  console.debug(Constants.StripeEventHandlerComplete);
+  console.debug(Constants.StripeEventHandlerComplete, stripeEvent?.type);
 
   return {
     statusCode: 200,
@@ -205,7 +205,7 @@ const processVariousCheckoutSessions = (type, data) => {
       console.debug(Constants.StripeCheckoutSessionETSSPaymentMode);
       processETSSPurchaseData(type, data);
     } else {
-      console.debug(Constants.StripeCheckoutSessionRentPaymentMode);
+      console.debug(Constants.StripeCheckoutSessionRentOrOneTimePaymentMode);
       processRentalPaymentsData(type, data);
     }
   }
@@ -271,32 +271,36 @@ const processRentalPaymentsData = async (stripeEventType, data) => {
         rentMonth,
         tenantId,
         note,
+        customEventType,
       } = metadata;
 
       const stripePaymentIntentID = data?.payment_intent;
-      console.debug(stripeEventType);
-      if (stripeEventType === StripeOnetimePaymentEnumValue) {
-        console.debug(Constants.StripeOneTimePaymentInit, stripeEventType);
+      if (customEventType === StripeOnetimePaymentEnumValue) {
+        console.debug(Constants.StripeOneTimePaymentInit, customEventType);
         // demonstrates one time payment made by tenant to property owner
         const draftData = {
           tenantId,
           tenantEmail,
           propertyId,
           propertyOwnerId,
-          rentMonth,
+          rentMonth: "-",
           rentAmount: Number(rentAmount),
           stripePaymentIntentID,
           method: "stripe",
           status: data.status,
-          stripeEventType,
           paymentMethodType: Object.keys(data.payment_method_options)[0],
           createdBy: tenantId, // tenant is the only one who can pay
           note: note, // description of charge
           createdOn: dayjs().toISOString(),
           updatedBy: tenantId,
           updatedOn: dayjs().toISOString(),
-          customEventType: stripeEventType,
+          customEventType,
         };
+
+        console.debug(
+          Constants.StripeUpdateDbWithOneTimePaymentEvent,
+          process.env.SITE_URL,
+        );
         const response = await fetch(
           `${process.env.SITE_URL}/.netlify/functions/0012_update_stripe_payments`,
           {
@@ -339,7 +343,10 @@ const processRentalPaymentsData = async (stripeEventType, data) => {
           updatedOn: dayjs().toISOString(),
         };
 
-        console.debug(process.env.SITE_URL);
+        console.debug(
+          Constants.StripeUpdateDbWithRentPaymentEvent,
+          process.env.SITE_URL,
+        );
         const response = await fetch(
           `${process.env.SITE_URL}/.netlify/functions/0012_update_stripe_payments`,
           {

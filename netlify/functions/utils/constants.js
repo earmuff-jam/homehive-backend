@@ -121,6 +121,8 @@ export const Constants = {
   StripeRegularRentPaymentUpdateDbMsg:
     "Updating database for rental payments event",
   StripeOneTimePaymentFailed: "Failed to process one time payment",
+  StripeOneTimePaymentAllowedMethodMsg:
+    "Executing one time payment request with allowed payment method ",
   StripeOneTimePaymentMsgSuccess:
     "Successfully created new session for one time payment",
   StripeUpdateDbWithOneTimePaymentEvent:

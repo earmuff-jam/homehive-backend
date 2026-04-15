@@ -8,7 +8,7 @@
  * Must have feature flags enabled for this feature.
  */
 import { Constants } from "./utils/constants";
-import { validateRequest } from "./utils/utils";
+import { populateCorsHeaders, validateRequest } from "./utils/utils";
 import Stripe from "stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
@@ -87,8 +87,8 @@ export const handler = async (event) => {
           quantity: 1,
         },
       ],
-      success_url: process.env.STRIPE_RETURN_URL,
-      cancel_url: process.env.STRIPE_REFRESH_URL,
+      success_url: process.env.BASE_SERVICE_URL + "/rent/settings?success=1",
+      cancel_url: process.env.BASE_SERVICE_URL + "/rent/settings?refresh=1",
       metadata: {
         customer_email: email, // customer_email for stripe metadata
         userId,

@@ -14,23 +14,10 @@ import {
   sanitizeApiFields,
 } from "./utils/utils";
 
-const isDevEnv = process.env.DEV_ENV;
-const AdminAuthorizedKey = process.env.ADMIN_KEY;
+const isDevEnv = process.env.DEV_ENV === "true";
 const IntegrationKey = process.env.INTEGRATION_KEY;
 
 export const handler = async (event) => {
-  if (!isDevEnv && event.queryStringParameters?.key !== AdminAuthorizedKey) {
-    console.error(Constants.MethodNotAuthorized);
-    return {
-      statusCode: 401,
-      headers: {
-        ...populateCorsHeaders(),
-        "Content-Type": "application/json",
-      },
-      body: Constants.MethodNotAuthorized,
-    };
-  }
-
   try {
     const data = JSON.parse(event.body);
     // other values can be non-existent
@@ -39,7 +26,7 @@ export const handler = async (event) => {
       !data?.stripeCustomerId ||
       !data?.stripeSubscriptionId
     ) {
-      console.error(Constants.MissingRequiredFields);
+      console.debug(Constants.MissingRequiredFields);
       return false;
     }
 
@@ -124,7 +111,7 @@ export const handler = async (event) => {
       );
 
       if (!response.ok) {
-        console.error(Constants.SubscriptionNotificationFailureErrorMsg);
+        console.debug(Constants.FailedToSendEmailNotification);
         // eat the exception
         return {
           statusCode: 500,
@@ -132,7 +119,7 @@ export const handler = async (event) => {
             ...populateCorsHeaders(),
             "Content-Type": "application/json",
           },
-          body: Constants.SubscriptionNotificationFailureErrorMsg,
+          body: Constants.FailedToSendEmailNotification,
         };
       }
     }

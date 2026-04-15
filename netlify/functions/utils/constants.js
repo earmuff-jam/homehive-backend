@@ -12,6 +12,10 @@ export const Constants = {
   RaspyOtherIntentDetected: "Found message with intent noted as other.",
   RaspyErrorMessage: "Unable to fetch requested information from Raspy. ",
 
+  // Email Service related messages
+  EmailSuccessResponse: "Successfully sent email",
+  EmailFailedResponse: "Failed to send email.",
+
   // ARPS releted messages
   ARPSMissingRequiredFields: "Missing fields for selected tenant. Skipping",
   ARPSRentRecordExists: "Found a matching rent record. Skipping",
@@ -25,10 +29,6 @@ export const Constants = {
   ARPSTenantRentNotDue:
     "Tenant start date begins at a later date. No rent request to process. Skipping",
   ARPSMetadataFoundMessage: "Metadata detected. Registering email service",
-  ARPSRentalPaymentsDbDuringUpdateStripePayment:
-    "Initializing database for default rental payments service",
-  ARPSRentsDbDuringUpdateStripePayment:
-    "Metadata detected. Using default collection for storage services",
   ARPSWebhookHandlerFailed:
     "Failed to update database with details from webhook handler",
   ARPSCreateSigningRequestInitializedMessage:
@@ -46,7 +46,60 @@ export const Constants = {
   PaymentRecievedYetToProcess:
     "Payment recieved, but has not been completed yet from stripe",
 
-  // Stripe Payment Status Messages
+  // Stripe payment services related messages
+  StripeEventHandlerInit: "Starting event handler to process request",
+  StripeEventHandlerComplete: "Completed event handler processing request",
+  StripeEventHandlerErrorMsg:
+    "Unable to process webhook signature request, error: ",
+  StripePaymentIntentCreatedMsg:
+    "Processing stripe payment services for payment intent with created stamp.",
+  StripePaymentIntentProcessingMsg:
+    "Processing stripe payment services for payment intent with processing stamp.",
+  StripePaymentIntentSucceededMsg:
+    "Processing stripe payment services for payment intent with successed stamp.",
+  StripeCheckoutSessionCompleted:
+    "Processing stripe payment services for checkout session intent with complete stamp.",
+  StripeCheckoutSessionSubscriptionMode:
+    "Detected subscription mode, registering as a subscription service",
+  StripeCheckoutSessionRentOrOneTimePaymentMode:
+    "Detected rental payment or one time payment mode, registering as a rent payment service",
+  StripeCheckoutSessionETSSPaymentMode:
+    "Detected ETSS token purchase, registering as a ETSS token payment service",
+  StripeCheckoutSessionAsyncPaymentSucceeded:
+    "Processing stripe payment services for checkout async session intent with payments succeeded stamp.",
+  StripeCheckoutSessionAsyncPaymentFailed:
+    "Processing stripe payment services for checkout async session intent with payments failed stamp.",
+  StripeChargeFailed:
+    "Processing stripe payment services for charge intent with failed stamp.",
+  StripeChargePending:
+    "Processing stripe payment services for charge intent with pending stamp.",
+  StripeChargeSucceeded:
+    "Processing stripe payment services for charge intent with success stamp.",
+  StripeChargeUpdated:
+    "Processing stripe payment services for charge intent with update stamp.",
+  StripeNoMatchingWebhookValue:
+    "No matching webhook value found for event type:",
+  StripeSelectedCollectionInit:
+    "No Metadata detected. Using collection for rental payment services",
+  StripeETSSCollectionInit:
+    "ETSS token system detected. Using collection for etss payment services",
+  StripeETSSValidateTokenInit:
+    "Validating ETSS Token for electronic payment services",
+  StripeETSSConsumeTokenInit:
+    "Consuming ETSS Token for electronic payment services",
+  StripeUpdateSelectedCollection:
+    "Metadata detected. Using collection for rent services",
+  StripePaymentStatusError:
+    "Unable to process stripe payment services without correct payment status",
+  StripeFailedToCreateCheckoutSession:
+    "Failed to create stripe checkout session.",
+  StripeFailedToCreateETSSSession: "Failed to create stripe ETSS session.",
+  StripeInvalidTokensForETSSSession:
+    "Unable to send Esign document, invalid tokens",
+  StripeFailedToCreateAccount: "Failed to create stripe account",
+  StripeFailedToProcessPaymentConfirmation:
+    "Failed to process stripe payment confirmation",
+
   StripePaymentStatusCompleted: "paid",
   StripePaymentStatusManualStatus: "manual",
   StripePaymentIntentStatusCompleted: "succeeded",
@@ -54,8 +107,33 @@ export const Constants = {
   // Stripe Customer Link
   StripeCreateCustomerLinkMissingEmailMsg:
     "problem creating customer, missing email",
+  StripeCreateCustomerLinkMissingStripeCustomerId:
+    "problem creating customer, missing stripe customer id",
   StripeCreateCustomerLinkSuccessMsg:
     "Processing creating stripe customer link for provided email address",
+
+  // Stripe One Time Payment Related Messages
+  StripeCreateCustomerId:
+    "Successfully created new customer id for one time payment",
+  StripeOneTimePaymentInit: "Creating new session for one time payment",
+  StripeOneTimePaymentUpdateDbMsg:
+    "Updating database for one time payment event",
+  StripeRegularRentPaymentUpdateDbMsg:
+    "Updating database for rental payments event",
+  StripeOneTimePaymentFailed: "Failed to process one time payment",
+  StripeOneTimePaymentAllowedMethodMsg:
+    "Executing one time payment request with allowed payment method ",
+  StripeOneTimePaymentMsgSuccess:
+    "Successfully created new session for one time payment",
+  StripeUpdateDbWithOneTimePaymentEvent:
+    "Updating database with handler for one time payment",
+  StripeUpdateDbWithRentPaymentEvent:
+    "Updating database with handler for rental payment services",
+
+  // Stripe Rental Payments Related Messages
+  StripeRentalPaymentsInit:
+    "Creating new session for rental payments from tenant",
+  StripeRentalPaymentsFailed: "Failed to process rental payments from tenant",
 
   // Subscription Related Messages
   SubscriptionDetailsUpdatedSuccessMsg:
@@ -70,11 +148,23 @@ export const Constants = {
     "Successfully completed checkout session for subscription",
   SubscriptionPaymentErrorMsg: "Payment failed for selected subscription.",
   SubscriptionNotificationSuccessMsg: "Unable to send email notification",
-  SubscriptionNotificationFailureErrorMsg: "Unable to send email notification",
   SubscriptionFailureMessage: "Unable to update user subscription",
+  FailedToSendEmailNotification: "Failed to send email notification ",
+  FailedToCreateOnetimePaymentSession:
+    "Failed to create one time payment session ",
 
-  // Common Error Messages
+  // Esign Form Related Messages
+  ProcessingEsignRequest: "Starting processing handler for Esign request",
+  CompletedScanMessage: "Completed full scan of pdf document.",
+  FailedToProcessDocument: "Failed to process provided document.",
+  FailedToReceievePdf: "Unable to fetch selected pdf",
+  EsignSentSuccessfully: "Signature request was sent successfully",
+  ETSSTokenConsumedSuccessfully: "One token was consumed successfully",
+
+  // Common Messages
+  SuccessResponse: "Success",
   MethodNotAllowed: "Method not allowed",
+  FailedToProcessDataError: "Failed to process data",
   InvalidRequest: "Invalid request detected",
   MethodNotAuthorized: "Method not authorized",
   MissingRequiredFields: "Missing required fields",

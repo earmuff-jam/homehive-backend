@@ -15,7 +15,7 @@ import {
 } from "./utils/utils";
 import Groq from "groq-sdk";
 
-const isDevEnv = process.env.DEV_ENV;
+const isDevEnv = process.env.DEV_ENV === "true";
 
 const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY,
@@ -45,7 +45,7 @@ export const handler = async (event) => {
     const { email, message } = JSON.parse(event.body);
 
     if (!email || !message) {
-      console.error(Constants.MissingRequiredFields);
+      console.debug(Constants.MissingRequiredFields);
       return {
         statusCode: 401,
         headers: populateCorsHeaders(),

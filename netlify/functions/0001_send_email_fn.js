@@ -23,7 +23,7 @@ export const handler = async (event) => {
     };
   }
 
-  if (("POST" || "OPTIONS") !== event.httpMethod) {
+  if (event.httpMethod !== "POST" && event.httpMethod !== "OPTIONS") {
     console.debug(Constants.MethodNotAllowed);
     return {
       statusCode: 405,
@@ -96,12 +96,12 @@ export const handler = async (event) => {
       body: JSON.stringify({ message: Constants.EmailSuccessResponse }),
     };
   } catch (error) {
-    console.debug("failed to send email. details ", error);
+    console.debug(Constants.EmailFailedResponse, error);
     return {
       statusCode: 500,
       headers: populateCorsHeaders(),
       body: JSON.stringify({
-        error: "failed to send email",
+        error: Constants.EmailFailedResponse,
         errorDetails: error,
       }),
     };

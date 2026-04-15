@@ -5,13 +5,15 @@
   "type": "module",
   "scripts": {
     "lint": "eslint .",
-    "fix": "prettier --write .",
-    "check": "prettier --check .",
+    "prettierw": "prettier --write .",
+    "prettierc": "prettier --check .",
     "debug": "netlify dev --inspect",
     "analyzer": "npx vite-bundle-visualizer"
   },
   "dependencies": {
+    "@dropbox/sign": "^1.10.0",
     "@sendgrid/mail": "^8.1.5",
+    "busboy": "^1.6.0",
     "dayjs": "^1.11.13",
     "firebase": "^11.6.0",
     "firebase-admin": "^13.4.0",

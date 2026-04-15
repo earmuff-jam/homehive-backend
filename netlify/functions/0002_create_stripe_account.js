@@ -59,12 +59,13 @@ export const handler = async (event) => {
       body: JSON.stringify({ accountId: account.id }),
     };
   } catch (error) {
-    console.debug("failed to create stripe account. details ", error);
+    console.debug(Constants.StripeFailedToCreateAccount, error);
     return {
       statusCode: 400,
       headers: populateCorsHeaders(),
       body: JSON.stringify({
-        error: error.message || Constants.UnknownErrorOccured,
+        error: Constants.StripeFailedToCreateAccount,
+        errorDetails: error.message || Constants.UnknownErrorOccured,
       }),
     };
   }

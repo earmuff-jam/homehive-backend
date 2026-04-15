@@ -43,8 +43,8 @@ export const handler = async (event) => {
     }
     const accountLink = await stripe.accountLinks.create({
       account: accountId,
-      refresh_url: process.env.STRIPE_REFRESH_URL,
-      return_url: process.env.STRIPE_RETURN_URL,
+      refresh_url: process.env.BASE_SERVICE_URL + "/rent/settings?refresh=1",
+      return_url: process.env.BASE_SERVICE_URL + "/rent/settings?success=1",
       type: "account_onboarding",
     });
 

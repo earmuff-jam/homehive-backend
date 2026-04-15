@@ -8,54 +8,72 @@
  *
  * Must have feature flags enabled for this feature.
  */
+import dayjs from "dayjs";
+
 import { Constants } from "./utils/constants";
-import { initializeFirebase, populateCorsHeaders } from "./utils/utils";
+import {
+  StripeOnetimePaymentEnumValue,
+  initializeFirebase,
+  populateCorsHeaders,
+} from "./utils/utils";
 
 const isDevEnv = process.env.DEV_ENV === "true";
-const AdminAuthorizedKey = process.env.ADMIN_KEY;
 const IntegrationKey = process.env.INTEGRATION_KEY;
 
-// defines a function used to retrieve rental payments and associated property data.
-// also sends email to associated rentees if applicable.
-// if the "createdBy" column exists, we assume that the webhook request
-// contained metadata which needs to be stored and processed differently.
-// this allows us to have idempotency over rental payments that are marked
-// as complete vs payments that are not fully completed.
 export const handler = async (event) => {
-  if (!isDevEnv && event.queryStringParameters?.key !== AdminAuthorizedKey) {
-    console.error(Constants.MethodNotAuthorized);
-    return {
-      statusCode: 401,
-      headers: {
-        ...populateCorsHeaders(),
-        "Content-Type": "application/json",
-      },
-      body: Constants.MethodNotAuthorized,
-    };
-  }
-
   try {
+    // if the "createdBy" column exists, we assume that the webhook request
+    // contained metadata which needs to be stored and processed differently.
+    // this allows us to have idempotency over rental payments that are marked
+    // as complete vs payments that are not fully completed.
     const data = JSON.parse(event.body);
     const containsMetadata = Boolean(data?.createdBy);
+    const isOnetimePayment =
+      data?.customEventType === StripeOnetimePaymentEnumValue;
 
-    let draftCollection = "rentalPayments";
-    console.debug(Constants.ARPSRentalPaymentsDbDuringUpdateStripePayment);
+    const draftCollection = "rents";
+    console.debug(Constants.StripeSelectedCollectionInit);
     if (containsMetadata) {
-      draftCollection = "rents";
-      console.debug(Constants.ARPSRentsDbDuringUpdateStripePayment);
+      console.debug(Constants.StripeUpdateSelectedCollection);
     }
 
     const db = initializeFirebase(isDevEnv);
     const docRef = db
       .collection(draftCollection)
       .doc(data.stripePaymentIntentID);
-    await docRef.set(data, { merge: true });
+
+    console.debug("wat", isOnetimePayment, JSON.stringify(data));
+    if (isOnetimePayment) {
+      console.debug(Constants.StripeOneTimePaymentUpdateDbMsg);
+      await docRef.set(data, { merge: true });
+    } else {
+      console.debug(Constants.StripeRegularRentPaymentUpdateDbMsg);
+      await docRef.set(data, { merge: true });
+    }
 
     // send email for payment notification from clients
     if (containsMetadata) {
       console.debug(Constants.ARPSMetadataFoundMessage);
       const subject = "Notification of payment attached.";
-      const text = `
+
+      let text = "";
+      if (isOnetimePayment) {
+        text = `
+      Hi there,
+      
+      Attached is your notification of payment.
+
+      Payment Date: ${dayjs().format("DD-MM-YYYY")}
+      Payment Amount: $${data?.rentAmount}
+
+      Current payment status: ${data?.status}
+
+      Thank you,
+
+      This is an auto-generated email. Please do not reply to this email.
+      `;
+      } else {
+        text = `
       Hi there,
       
       Attached is your notification of payment.
@@ -73,6 +91,7 @@ export const handler = async (event) => {
 
       This is an auto-generated email. Please do not reply to this email.
       `;
+      }
 
       const response = await fetch(
         `${process.env.SITE_URL}/.netlify/functions/0001_send_email_fn`,
@@ -92,13 +111,14 @@ export const handler = async (event) => {
       );
 
       if (!response.ok) {
-        console.error(
+        console.debug(
           "unable to send email notification from stripe webhook handler.",
         );
         // eat the exception
         return;
       }
     }
+
     return {
       statusCode: 200,
       headers: {
@@ -108,7 +128,8 @@ export const handler = async (event) => {
       body: JSON.stringify({ success: true, id: docRef.id }),
     };
   } catch (err) {
-    console.error(Constants.ARPSWebhookHandlerFailed, err);
+    console.debug(Constants.ARPSWebhookHandlerFailed, err);
+
     return {
       statusCode: 500,
       headers: {

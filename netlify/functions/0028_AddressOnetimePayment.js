@@ -46,6 +46,7 @@ export const handler = async (event) => {
       propertyId,
       propertyOwnerId,
       stripeOwnerAccountId,
+      paymentMethod,
       rentAmount,
       rentMonth,
       status,
@@ -65,6 +66,7 @@ export const handler = async (event) => {
       !tenantEmail ||
       !tenantId ||
       !note ||
+      !paymentMethod ||
       !createdBy ||
       !createdOn ||
       !stripeOwnerAccountId
@@ -77,13 +79,18 @@ export const handler = async (event) => {
       };
     }
 
+    console.debug(
+      Constants.StripeOneTimePaymentAllowedMethodMsg,
+      paymentMethod,
+    );
+
     // creates a session to send charge to the tenant
     // the tenant opens email and pays the amount
     const session = await stripe.checkout.sessions.create(
       {
         mode: "payment",
         customer_email: tenantEmail,
-        payment_method_types: ["card", "us_bank_account"],
+        payment_method_types: [paymentMethod],
         line_items: [
           {
             price_data: {

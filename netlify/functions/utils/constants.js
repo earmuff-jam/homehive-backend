@@ -83,6 +83,8 @@ export const Constants = {
     "No Metadata detected. Using collection for rental payment services",
   StripeETSSCollectionInit:
     "ETSS token system detected. Using collection for etss payment services",
+  StripeETSSValidateTokenInit:
+    "Validating ETSS Token for electronic payment services",
   StripeETSSConsumeTokenInit:
     "Consuming ETSS Token for electronic payment services",
   StripeUpdateSelectedCollection:
@@ -92,6 +94,8 @@ export const Constants = {
   StripeFailedToCreateCheckoutSession:
     "Failed to create stripe checkout session.",
   StripeFailedToCreateETSSSession: "Failed to create stripe ETSS session.",
+  StripeInvalidTokensForETSSSession:
+    "Unable to send Esign document, invalid tokens",
   StripeFailedToCreateAccount: "Failed to create stripe account",
   StripeFailedToProcessPaymentConfirmation:
     "Failed to process stripe payment confirmation",

@@ -144,6 +144,19 @@ export const handler = async (event) => {
     // removes testMode if not in dev env
     if (!isDevEnv) delete requestData.testMode;
 
+    // verifies valid tokens
+    const hasValidTokens = validateETTSToken(fields?.stripeCustomerEmail);
+    if (!hasValidTokens) {
+      console.debug(Constants.StripeInvalidTokensForETSSSession);
+      return {
+        statusCode: 401,
+        headers: populateCorsHeaders(),
+        body: JSON.stringify({
+          error: Constants.StripeInvalidTokensForETSSSession,
+        }),
+      };
+    }
+
     if (formFieldsPerDocument && formFieldsPerDocument.length > 0) {
       requestData.formFieldsPerDocument = formFieldsPerDocument;
     }
@@ -203,6 +216,42 @@ export const handler = async (event) => {
         console.debug(Constants.FailedToProcessDocument, err);
       }
     }
+  }
+};
+
+// validateETTSToken ...
+// defines a function that validates the ETTS token before
+// sending the electronic signature.
+const validateETTSToken = async (stripeCustomerEmail) => {
+  try {
+    console.debug(Constants.StripeETSSValidateTokenInit);
+    const db = initializeFirebase(isDevEnv);
+    const snapshot = await db
+      .collection("etssPayments")
+      .where("stripeCustomerEmail", "==", stripeCustomerEmail)
+      .where("status", "==", "complete")
+      .get();
+
+    const etssPayments = [];
+    snapshot.forEach((doc) => {
+      etssPayments.push({ id: doc.id, ...doc.data() });
+    });
+
+    const validTokens = etssPayments.reduce(
+      (acc, el) =>
+        acc + (Number(el?.tokens) || 0) - (Number(el?.consumedTokens) || 0),
+      0,
+    );
+
+    console.debug(
+      "Found valid tokens. Preparing electronic documents for signature. Total valid tokens before Esign: ",
+      validTokens,
+    );
+
+    return true;
+  } catch (err) {
+    console.debug(Constants.FailedToProcessDocument, err);
+    return false;
   }
 };
 

@@ -150,7 +150,6 @@ const handleStripeEventChargeCodes = async (type, data) => {
     case StripeWebhookEnumValues.InvoicePaymentSucceeded:
       // only webhook that can setup stripe subscription; suggested by Stripe
       console.debug(Constants.SubscriptionPaymentSuccessMsg);
-
       await processSubscriptionData(type, {
         stripeSubscriptionId: data?.parent?.subscription_details?.subscription,
         subscriptionAmount: data?.total,
@@ -159,6 +158,7 @@ const handleStripeEventChargeCodes = async (type, data) => {
         stripeCustomerId: data.customer,
         stripeCustomerEmail: data.customer_email,
         updatedOn: dayjs().toISOString(),
+        subscriptionProductId: data?.lines?.data[0].pricing?.price_details?.product,
         updateExtraCollection: ["users"], // server representation of additional tables to update
       });
 

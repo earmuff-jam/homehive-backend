@@ -15,7 +15,11 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 
 // AllowedProductNamesForSubscription ...
 // defines an array of titles used to retrieve specific products
-const AllowedProductNamesForSubscription = ["Monthly Plan", "Yearly Plan"];
+const AllowedProductNamesForSubscription = [
+  "Monthly Starter Plan",
+  "Monthly Professional Plan",
+  "Monthly Enterprise Plan",
+];
 
 export const handler = async (event) => {
   const isValidRequest = validateRequest(event.headers["x-api-key"]);

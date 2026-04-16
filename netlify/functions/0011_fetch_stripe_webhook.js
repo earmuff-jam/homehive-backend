@@ -158,7 +158,8 @@ const handleStripeEventChargeCodes = async (type, data) => {
         stripeCustomerId: data.customer,
         stripeCustomerEmail: data.customer_email,
         updatedOn: dayjs().toISOString(),
-        subscriptionProductId: data?.lines?.data[0].pricing?.price_details?.product,
+        subscriptionProductId:
+          data?.lines?.data[0].pricing?.price_details?.product,
         updateExtraCollection: ["users"], // server representation of additional tables to update
       });
 

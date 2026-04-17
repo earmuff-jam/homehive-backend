@@ -42,7 +42,6 @@ export const handler = async (event) => {
       .collection(draftCollection)
       .doc(data.stripePaymentIntentID);
 
-    console.debug("wat", isOnetimePayment, JSON.stringify(data));
     if (isOnetimePayment) {
       console.debug(Constants.StripeOneTimePaymentUpdateDbMsg);
       await docRef.set(data, { merge: true });

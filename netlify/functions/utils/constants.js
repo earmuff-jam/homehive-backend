@@ -59,6 +59,8 @@ export const Constants = {
     "Processing stripe payment services for payment intent with successed stamp.",
   StripeCheckoutSessionCompleted:
     "Processing stripe payment services for checkout session intent with complete stamp.",
+  StripeCheckoutSessionRedirectForACHPayments:
+    "Checkout session was created, awaiting async payment completion if bank payment was made",
   StripeCheckoutSessionSubscriptionMode:
     "Detected subscription mode, registering as a subscription service",
   StripeCheckoutSessionRentOrOneTimePaymentMode:

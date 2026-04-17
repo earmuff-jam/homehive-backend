@@ -124,14 +124,14 @@ const handleStripeEventChargeCodes = async (type, data) => {
 
     // Checkout Session events
     case StripeWebhookEnumValues.CheckoutSessionCompleted:
-      if (data?.payment_status !== Constants.StripePaymentStatusCompleted) {
-        console.debug(Constants.StripePaymentStatusError);
-        return;
+      if (data?.payment_status === Constants.StripePaymentStatusCompleted) {
+        // Only process if paid immediately (card payments)
+        console.debug(Constants.StripeCheckoutSessionCompleted);
+        await processVariousCheckoutSessions(type, data);
+      } else {
+        // do nothing; async handlers will handle it below
+        console.debug(Constants.StripeCheckoutSessionRedirectForACHPayments);
       }
-
-      console.debug(Constants.StripeCheckoutSessionCompleted);
-      await processVariousCheckoutSessions(type, data);
-
       break;
 
     case StripeWebhookEnumValues.CheckoutSessionAsyncPaymentSucceeded:
@@ -150,7 +150,6 @@ const handleStripeEventChargeCodes = async (type, data) => {
     case StripeWebhookEnumValues.InvoicePaymentSucceeded:
       // only webhook that can setup stripe subscription; suggested by Stripe
       console.debug(Constants.SubscriptionPaymentSuccessMsg);
-
       await processSubscriptionData(type, {
         stripeSubscriptionId: data?.parent?.subscription_details?.subscription,
         subscriptionAmount: data?.total,
@@ -159,6 +158,8 @@ const handleStripeEventChargeCodes = async (type, data) => {
         stripeCustomerId: data.customer,
         stripeCustomerEmail: data.customer_email,
         updatedOn: dayjs().toISOString(),
+        subscriptionProductId:
+          data?.lines?.data[0].pricing?.price_details?.product,
         updateExtraCollection: ["users"], // server representation of additional tables to update
       });
 
@@ -193,7 +194,7 @@ const processVariousCheckoutSessions = async (type, data) => {
   if (data.mode === "subscription") {
     console.debug(Constants.StripeCheckoutSessionSubscriptionMode);
     const formattedNumber = Number(data?.metadata?.productCost ?? 0) / 100;
-    processSubscriptionData(type, {
+    await processSubscriptionData(type, {
       stripeSubscriptionId: data.subscription,
       subscriptionAmount: formattedNumber,
       subscriptionProductName: data?.metadata?.productName,
@@ -331,15 +332,17 @@ const processRentalPaymentsData = async (stripeEventType, data) => {
           propertyId,
           propertyOwnerId,
           rentMonth,
-          rentAmount: Number(rentAmount),
-          additionalCharges: Number(additionalCharges),
-          initialLateFee: Number(initialLateFee),
-          dailyLateFee: Number(dailyLateFee),
+          rentAmount: Number(rentAmount) / 100,
+          additionalCharges: Number(additionalCharges) / 100,
+          initialLateFee: Number(initialLateFee) / 100,
+          dailyLateFee: Number(dailyLateFee) / 100,
           stripePaymentIntentID,
           method: "stripe",
-          status: data.status,
+          status: data?.payment_status || data?.status,
           stripeEventType,
-          paymentMethodType: Object.keys(data.payment_method_options)[0],
+          paymentMethodType: data?.payment_method_options
+            ? Object.keys(data.payment_method_options)[0]
+            : "us_bank_account",
           createdBy: tenantId, // tenant is the only one who can pay
           createdOn: dayjs().toISOString(),
           updatedBy: tenantId,

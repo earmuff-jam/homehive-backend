@@ -86,45 +86,46 @@ export const handler = async (event) => {
 
     // creates a session to send charge to the tenant
     // the tenant opens email and pays the amount
-    const session = await stripe.checkout.sessions.create(
-      {
-        mode: "payment",
-        customer_email: tenantEmail,
-        payment_method_types: [paymentMethod],
-        line_items: [
-          {
-            price_data: {
-              currency: "usd",
-              product_data: {
-                name: "One Time Charge",
-                description: note,
-              },
-              unit_amount: Math.round(Number(rentAmount) * 100),
+    const session = await stripe.checkout.sessions.create({
+      mode: "payment",
+      customer_email: tenantEmail,
+      payment_method_types: [paymentMethod],
+      line_items: [
+        {
+          price_data: {
+            currency: "usd",
+            product_data: {
+              name: "One Time Charge",
+              description: note,
             },
-            quantity: 1,
+            unit_amount: Math.round(Number(rentAmount) * 100),
           },
-        ],
-        success_url:
-          process.env.BASE_SERVICE_URL +
-          "/rent/rental?success=1" +
-          "&session_id={CHECKOUT_SESSION_ID}",
-        cancel_url: process.env.BASE_SERVICE_URL + "/rent/rental?refresh=1",
-        metadata: {
-          customer_email: tenantEmail,
-          tenantId,
-          propertyId,
-          propertyOwnerId,
-          rentMonth,
-          createdBy,
-          rentAmount,
-          note: note, // description of charge
-          customEventType: StripeOnetimePaymentEnumValue,
+          quantity: 1,
+        },
+      ],
+      success_url:
+        process.env.BASE_SERVICE_URL +
+        "/rent/rental?success=1" +
+        "&session_id={CHECKOUT_SESSION_ID}",
+      cancel_url: process.env.BASE_SERVICE_URL + "/rent/rental?refresh=1",
+      metadata: {
+        customer_email: tenantEmail,
+        tenantId,
+        propertyId,
+        propertyOwnerId,
+        rentMonth,
+        createdBy,
+        rentAmount,
+        note: note, // description of charge
+        customEventType: StripeOnetimePaymentEnumValue,
+      },
+      payment_intent_data: {
+        transfer_data: {
+          // transfer payment to correct owner
+          destination: stripeOwnerAccountId,
         },
       },
-      {
-        stripeAccount: stripeOwnerAccountId, // session is created on behalf of the property owner
-      },
-    );
+    });
 
     console.debug(Constants.StripeOneTimePaymentMsgSuccess);
 

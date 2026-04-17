@@ -124,14 +124,14 @@ const handleStripeEventChargeCodes = async (type, data) => {
 
     // Checkout Session events
     case StripeWebhookEnumValues.CheckoutSessionCompleted:
-      if (data?.payment_status !== Constants.StripePaymentStatusCompleted) {
-        console.debug(Constants.StripePaymentStatusError);
-        return;
+      if (data?.payment_status === Constants.StripePaymentStatusCompleted) {
+        // Only process if paid immediately (card payments)
+        console.debug(Constants.StripeCheckoutSessionCompleted);
+        await processVariousCheckoutSessions(type, data);
+      } else {
+        // do nothing; async handlers will handle it below
+        console.debug(Constants.StripeCheckoutSessionRedirectForACHPayments);
       }
-
-      console.debug(Constants.StripeCheckoutSessionCompleted);
-      await processVariousCheckoutSessions(type, data);
-
       break;
 
     case StripeWebhookEnumValues.CheckoutSessionAsyncPaymentSucceeded:

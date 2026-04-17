@@ -67,74 +67,75 @@ export const handler = async (event) => {
       };
     }
 
-    const session = await stripe.checkout.sessions.create(
-      {
-        payment_method_types: ["card", "us_bank_account"],
-        line_items: [
-          {
-            price_data: {
-              currency: "usd",
-              product_data: {
-                name: "Monthly Rent",
-              },
-              unit_amount: rentAmount,
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card", "us_bank_account"],
+      line_items: [
+        {
+          price_data: {
+            currency: "usd",
+            product_data: {
+              name: "Monthly Rent",
             },
-            quantity: 1,
+            unit_amount: rentAmount,
           },
-          {
-            price_data: {
-              currency: "usd",
-              product_data: {
-                name: "Additional Charges",
-              },
-              unit_amount: additionalCharges,
-            },
-            quantity: 1,
-          },
-          {
-            price_data: {
-              currency: "usd",
-              product_data: {
-                name: "Initial late fee",
-              },
-              unit_amount: initialLateFee,
-            },
-            quantity: 1,
-          },
-          {
-            price_data: {
-              currency: "usd",
-              product_data: {
-                name: "Daily late fee",
-              },
-              unit_amount: dailyLateFee,
-            },
-            quantity: 1,
-          },
-        ],
-        mode: "payment",
-        customer_email: tenantEmail,
-        metadata: {
-          tenantId,
-          propertyId,
-          propertyOwnerId,
-          rentMonth,
-          rentAmount,
-          additionalCharges,
-          initialLateFee,
-          dailyLateFee,
-          customer_email: tenantEmail,
+          quantity: 1,
         },
-        success_url:
-          process.env.BASE_SERVICE_URL +
-          "/rent/rental?success=1" +
-          "&session_id={CHECKOUT_SESSION_ID}",
-        cancel_url: process.env.BASE_SERVICE_URL + "/rent/rental?refresh=1",
+        {
+          price_data: {
+            currency: "usd",
+            product_data: {
+              name: "Additional Charges",
+            },
+            unit_amount: additionalCharges,
+          },
+          quantity: 1,
+        },
+        {
+          price_data: {
+            currency: "usd",
+            product_data: {
+              name: "Initial late fee",
+            },
+            unit_amount: initialLateFee,
+          },
+          quantity: 1,
+        },
+        {
+          price_data: {
+            currency: "usd",
+            product_data: {
+              name: "Daily late fee",
+            },
+            unit_amount: dailyLateFee,
+          },
+          quantity: 1,
+        },
+      ],
+      mode: "payment",
+      customer_email: tenantEmail,
+      metadata: {
+        tenantId,
+        propertyId,
+        propertyOwnerId,
+        rentMonth,
+        rentAmount,
+        additionalCharges,
+        initialLateFee,
+        dailyLateFee,
+        customer_email: tenantEmail,
       },
-      {
-        stripeAccount: stripeOwnerAccountId, // session is created on behalf of the property owner
+      success_url:
+        process.env.BASE_SERVICE_URL +
+        "/rent/rental?success=1" +
+        "&session_id={CHECKOUT_SESSION_ID}",
+      cancel_url: process.env.BASE_SERVICE_URL + "/rent/rental?refresh=1",
+      payment_intent_data: {
+        transfer_data: {
+          // transfer payment to correct owner
+          destination: stripeOwnerAccountId,
+        },
       },
-    );
+    });
 
     return {
       statusCode: 200,

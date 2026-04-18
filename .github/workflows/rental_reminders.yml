@@ -1,5 +1,9 @@
 name: Rental Reminder Trigger
 
+# limit the permission to only read the github repo
+permissions:
+  contents: read
+
 on:
   schedule:
     - cron: "0 9 * * *" # every day at 9 AM UTC

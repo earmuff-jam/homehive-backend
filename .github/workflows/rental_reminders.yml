@@ -5,10 +5,22 @@ on:
     - cron: "0 9 * * *" # every day at 9 AM UTC
 
 jobs:
-  trigger:
+  trigger-test-arps:
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger Netlify Function
+      - name: Trigger ARPS Handler Test Env
         run: |
           curl -X POST \
-          "${{ secrets.SITE_URL }}/.netlify/functions/0010_send_automatic_reminders?key=${{ secrets.ADMIN_KEY }}"
+            -H "Content-Type: application/json" \
+            -d "{\"adminKey\":\"${{ secrets.ADMIN_KEY }}\",\"integrationKey\":\"${{ secrets.INTEGRATION_KEY }}\"}" \
+            "${{ secrets.TEST_SITE_URL }}/.netlify/functions/0010_send_automatic_reminders"
+
+  trigger-prod-arps:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger ARPS Handler Prod Env
+        run: |
+          curl -X POST \
+            -H "Content-Type: application/json" \
+            -d "{\"adminKey\":\"${{ secrets.ADMIN_KEY }}\",\"integrationKey\":\"${{ secrets.INTEGRATION_KEY }}\"}" \
+            "${{ secrets.PROD_SITE_URL }}/.netlify/functions/0010_send_automatic_reminders"

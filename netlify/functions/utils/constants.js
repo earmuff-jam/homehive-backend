@@ -26,8 +26,10 @@ export const Constants = {
     "Found rent due for selected tenant. Registering email service",
   ARPSRentOverDueDetected:
     "Found overdue rent for selected tenant. Registering email service",
-  ARPSTenantRentNotDue:
-    "Tenant start date begins at a later date. No rent request to process. Skipping",
+  ARPSTenantProrationPeriodMsg:
+    "Tenant is under proration period, start date begins at a later date. Skipping",
+  ARPSTenantAutoRenewPolicyDetected:
+    "Auto renew policy is detected. Validating request.",
   ARPSMetadataFoundMessage: "Metadata detected. Registering email service",
   ARPSWebhookHandlerFailed:
     "Failed to update database with details from webhook handler",

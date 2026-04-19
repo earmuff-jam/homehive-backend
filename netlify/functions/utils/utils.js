@@ -35,7 +35,8 @@ export const Role = {
 // ARPSReminderSettings ...
 // defines the configuration settings for ARPS
 export const ARPSReminderSettings = {
-  GENERAL: [7, 3, 1, 0],
+  RentReminderDays: [7, 3, 1, 0],
+  AutoRenewLeaseReminderDays: [0, 30],
 };
 
 // EsignTokenPriceMap ...

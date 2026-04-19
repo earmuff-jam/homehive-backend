@@ -36,7 +36,7 @@ export const handler = async (event) => {
   try {
     const today = dayjs();
     const emailPromises = [];
-    const reminders = ARPSReminderSettings.GENERAL;
+    const reminders = ARPSReminderSettings.RentReminderDays;
 
     db = initializeFirebase(isDevEnv);
 
@@ -75,10 +75,19 @@ export const handler = async (event) => {
       // allows to send lease renewal message to client
       if (tenant?.isAutoRenewPolicySet) {
         console.debug(Constants.ARPSTenantAutoRenewPolicyDetected);
-        await processEmailService({
-          ...propertyDetails,
-          ...tenant,
-        }).catch((err) => console.debug(Constants.EmailFailedResponse, err));
+
+        const autoRenewOn = tenant?.autoRenewDays;
+        const reminders = ARPSReminderSettings.AutoRenewLeaseReminderDays;
+        const updatedReminders = [...reminders, autoRenewOn];
+        const shouldSendAutoRenewReminder = updatedReminders.includes(diffDays);
+
+        if (shouldSendAutoRenewReminder) {
+          console.debug(Constants.ARPSAutoRenewReminderInit);
+          await processEmailService({
+            ...propertyDetails,
+            ...tenant,
+          }).catch((err) => console.debug(Constants.EmailFailedResponse, err));
+        }
       }
 
       const rentRecordExists = await rentRecordExistsFn(

@@ -53,8 +53,8 @@ export const handler = async (event) => {
       };
     }
 
-    // return fake dataset if dev env is present
     if (isDevEnv) {
+      // return predefined dataset if dev env is present
       console.debug(Constants.IsDevEnv);
       return {
         statusCode: 200,
@@ -81,7 +81,7 @@ export const handler = async (event) => {
           content: `
           User Question: ${message}
           Valid Intents: ${Object.values(IntentEnumValues)}
-          Classify user messages for a property management assistant.
+          Classify user messages and determine which intent it belongs to. Must choose one of the valid intents. Return Other only if you have to.
           `,
         },
       ],

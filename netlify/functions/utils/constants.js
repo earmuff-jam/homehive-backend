@@ -5,6 +5,7 @@ export const Constants = {
   IsDevEnv: "In development environment instance",
 
   // Raspy AI related message
+  RaspyDevEnvDetected: "Detected dev environment. Using predefined responses",
   RaspyUserIntentDetected:
     "Attempting to retrieve intent for requested message",
   RaspyPropertyOverviewIntentDetected:

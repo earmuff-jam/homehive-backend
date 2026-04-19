@@ -3,7 +3,6 @@
  *
  * defines schema and parameters for Raspy
  */
-import { RaspyAIDevTestDataset } from "./schemaConfig";
 
 // PropertyOverviewEnumValue ...
 export const PropertyOverviewEnumValue = "PropertyOverview";
@@ -13,8 +12,7 @@ export const TenantStatusEnumValue = "TenantStatus";
 export const RentAnalysisEnumValue = "RentAnalysis";
 // MaintenanceAlertsEnumValue ...
 export const MaintenanceAlertsEnumValue = "MaintenanceAlerts";
-// RecommendedActionsEnumValue ...
-export const RecommendedActionsEnumValue = "RecommendedActions";
+
 // OtherEnumValue ...
 export const OtherEnumValue = "Other";
 
@@ -25,14 +23,7 @@ export const IntentEnumValues = {
   TenantStatus: TenantStatusEnumValue,
   RentAnalysis: RentAnalysisEnumValue,
   MaintenanceAlerts: MaintenanceAlertsEnumValue,
-  PropertyRecommendations: RecommendedActionsEnumValue,
   Other: OtherEnumValue,
-};
-
-// UserIntentResponseSchema ...
-// defines the response schema for user intent
-const UserIntentResponseSchema = {
-  intent: Object.values(IntentEnumValues),
 };
 
 // GrokModelProps ...
@@ -46,15 +37,14 @@ export const GrokModelProps = {
     // user intent
     userIntent: {
       role: "system",
-      content: `You are a property management assistant. Classify user messages for a property management assistant. If information is missing, return null. Return response as JSON. Do not guess values. Focus on practical insights for landlords.
-      Must follow ${UserIntentResponseSchema}. Return ${IntentEnumValues.Other} if missing.`,
+      content: `You are a property management assistant. Classify user messages for a property management assistant. Use your best knowledge to guess what the user is trying to solve. Return response as JSON.`,
     },
     // property analysis
     propertyAnalysis: {
       role: "system",
-      content: `You are a property management assistant. Analyze property, tenant, and rent data and produce a useful recap for a property owner. If information is missing, return null. Return response as JSON. Do not guess values. Focus on practical insights for landlords and return a structured response.
+      content: `You are a property management assistant. Analyze property, tenant, and rent data and produce a useful recap for a property owner. Return response as JSON. Do not guess values. Focus on practical insights for landlords.
     
-      Always follow format defined within ${RaspyAIDevTestDataset}. The key intent can be used to know what schema to use.`,
+      Return list of recommended actions that the property owner can take.`,
     },
   },
 };

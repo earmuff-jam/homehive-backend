@@ -9,8 +9,8 @@
 import { Constants } from "./utils/constants";
 import { GrokModelProps, IntentEnumValues } from "./utils/raspy/config";
 import {
+  DefaultRecommendedActionsResponseSchema,
   RaspyAIDevTestDataset,
-  RaspyAIResponseSchemaOriginalArgs,
 } from "./utils/raspy/schemaConfig";
 import { populateCorsHeaders, validateRequest } from "./utils/utils";
 import Groq from "groq-sdk";
@@ -60,9 +60,9 @@ export const handler = async (event) => {
       };
     }
 
-    // return fake dataset if dev env is present
     if (isDevEnv) {
-      console.debug(Constants.IsDevEnv);
+      // return predefined dataset if dev env is present
+      console.debug(Constants.RaspyDevEnvDetected);
       const selectedResponse = RaspyAIDevTestDataset[intent];
 
       return {
@@ -87,14 +87,11 @@ export const handler = async (event) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          // blanket statement; UI should recheck message
-          ...RaspyAIResponseSchemaOriginalArgs,
+          // empty recommended actions for other intent
+          DefaultRecommendedActionsResponseSchema,
         }),
       };
     }
-
-    // main schema keys
-    const keys = Object.keys(RaspyAIResponseSchemaOriginalArgs);
 
     const completion = await groq.chat.completions.create({
       model: GrokModelProps.model,
@@ -107,20 +104,23 @@ export const handler = async (event) => {
         {
           role: "user",
           content: `
-          Intent: ${intent}
-          User Question: ${message}
-          Properties: ${JSON.stringify(properties)}
-          Tenants: ${JSON.stringify(tenants)}
-          Rents: ${JSON.stringify(rents)}
-          
-          MUST return JSON matching EXACTLY this structure keys:
-          ${JSON.stringify(keys)}
+Intent: ${intent}
+User Question: ${message}
+Properties: ${JSON.stringify(properties)}
+Tenants: ${JSON.stringify(tenants)}
+Rents: ${JSON.stringify(rents)}
+
+Rules:
+  - recommendedActions must be array of strings
+  - no objects allowed inside array
+  - no extra fields
+  - always return valid JSON
           `,
         },
       ],
     });
 
-    const rawReply = completion.choices[0]?.message?.content || "";
+    const rawReply = completion?.choices[0]?.message?.content || "";
     const rawReplyJson = JSON.parse(rawReply);
 
     return {

@@ -30,6 +30,8 @@ export const Constants = {
     "Tenant is under proration period, start date begins at a later date. Skipping",
   ARPSTenantAutoRenewPolicyDetected:
     "Auto renew policy is detected. Validating request.",
+  ARPSAutoRenewReminderInit:
+    "Tenant has interest in auto renewal for rent, processing",
   ARPSMetadataFoundMessage: "Metadata detected. Registering email service",
   ARPSWebhookHandlerFailed:
     "Failed to update database with details from webhook handler",

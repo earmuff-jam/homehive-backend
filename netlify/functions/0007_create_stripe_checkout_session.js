@@ -59,11 +59,11 @@ export const handler = async (event) => {
       !rentMonth ||
       !tenantEmail
     ) {
-      console.debug(Constants.MethodNotAuthorized);
+      console.debug(Constants.MissingRequiredFields);
       return {
         statusCode: 401,
         headers: populateCorsHeaders(),
-        body: JSON.stringify({ error: Constants.MethodNotAuthorized }),
+        body: JSON.stringify({ error: Constants.MissingRequiredFields }),
       };
     }
 

@@ -3,6 +3,7 @@
 export const Constants = {
   // Environment message
   IsDevEnv: "In development environment instance",
+  IsGroqDevEnv: "Running development environment for Raspy AI",
 
   // Raspy AI related message
   RaspyDevEnvDetected: "Detected dev environment. Using predefined responses",

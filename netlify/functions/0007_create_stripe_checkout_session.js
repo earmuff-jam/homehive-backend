@@ -59,6 +59,18 @@ export const handler = async (event) => {
       !rentMonth ||
       !tenantEmail
     ) {
+      console.debug(
+        rentAmount,
+        additionalCharges,
+        initialLateFee,
+        dailyLateFee,
+        stripeOwnerAccountId,
+        propertyId,
+        propertyOwnerId,
+        tenantId,
+        rentMonth,
+        tenantEmail,
+      );
       console.debug(Constants.MissingRequiredFields);
       return {
         statusCode: 401,

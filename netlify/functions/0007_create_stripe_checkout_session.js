@@ -48,10 +48,10 @@ export const handler = async (event) => {
     } = JSON.parse(event.body);
 
     if (
-      !rentAmount ||
-      !additionalCharges ||
-      !initialLateFee ||
-      !dailyLateFee ||
+      rentAmount == null ||
+      additionalCharges == null ||
+      initialLateFee == null ||
+      dailyLateFee == null ||
       !stripeOwnerAccountId ||
       !propertyId ||
       !propertyOwnerId ||
@@ -59,18 +59,6 @@ export const handler = async (event) => {
       !rentMonth ||
       !tenantEmail
     ) {
-      console.debug(
-        rentAmount,
-        additionalCharges,
-        initialLateFee,
-        dailyLateFee,
-        stripeOwnerAccountId,
-        propertyId,
-        propertyOwnerId,
-        tenantId,
-        rentMonth,
-        tenantEmail,
-      );
       console.debug(Constants.MissingRequiredFields);
       return {
         statusCode: 401,

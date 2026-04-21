@@ -2,7 +2,7 @@
  * File : 0029_SendPreparedEsignDocument.js
  *
  * This file is used to allow the users to send a document for electronic
- * signature
+ * signature using TurboDocx
  *
  * Must have feature flags enabled
  */
@@ -15,20 +15,20 @@ import {
   populateCorsHeaders,
   validateRequest,
 } from "./utils/utils";
-import { SignatureRequestApi } from "@dropbox/sign";
+import { TurboSign } from "@turbodocx/sdk";
 import Busboy from "busboy";
 import fs from "fs";
 import path from "path";
 
-const client = new SignatureRequestApi();
-client.username = process.env.ESIGN_API_KEY;
+const CompanyName = "EarmuffJam LLC";
+const EsignOrgId = process.env.ESIGN_ORG_ID;
+const EsignApiKey = process.env.ESIGN_API_KEY;
 
 const isDevEnv = process.env.DEV_ENV === "true";
 const IntegrationKey = process.env.INTEGRATION_KEY;
 
 export const handler = async (event) => {
   const isValidRequest = validateRequest(event.headers["x-api-key"]);
-
   if (!isValidRequest) {
     console.debug(Constants.MethodNotAuthorized);
     return {
@@ -70,27 +70,16 @@ export const handler = async (event) => {
       busboy.on("file", (_, file, info) => {
         const chunks = [];
 
-        if (info && info.filename) {
-          filename = info.filename;
-        } else if (typeof info === "string") {
-          filename = info;
-        }
+        filename = info?.filename || "document.pdf";
+        console.debug(Constants.EsignReadingFileDataWithMessage, filename);
 
-        file.on("data", (data) => {
-          chunks.push(data);
-        });
+        file.on("data", (data) => chunks.push(data));
 
         file.on("end", () => {
           pdfBuffer = Buffer.concat(chunks);
-          console.debug(
-            `Processing file ${filename} with size ${pdfBuffer.length}`,
-          );
         });
 
-        file.on("error", (err) => {
-          console.debug("File stream error:", err);
-          reject(err);
-        });
+        file.on("error", reject);
       });
 
       busboy.on("field", (name, value) => {
@@ -111,14 +100,15 @@ export const handler = async (event) => {
     tempFilePath = path.join("/tmp", `esign-${Date.now()}.pdf`);
     await fs.promises.writeFile(tempFilePath, pdfBuffer);
 
-    let formFieldsPerDocument = null;
     let signers = null;
+    let formFieldsPerDocument = null;
 
     if (fields.formFieldsPerDocument) {
       try {
         formFieldsPerDocument = JSON.parse(fields.formFieldsPerDocument);
       } catch (err) {
         console.debug(Constants.FailedToProcessDocument, err);
+        throw new Error(Constants.FailedToProcessDocument);
       }
     }
 
@@ -127,25 +117,12 @@ export const handler = async (event) => {
         signers = JSON.parse(fields.signers);
       } catch (err) {
         console.debug(Constants.FailedToProcessDocument, err);
+        throw new Error(Constants.FailedToProcessDocument);
       }
     }
 
-    const fileStream = fs.createReadStream(tempFilePath);
-
-    const requestData = {
-      title: fields.title,
-      subject: fields.subject,
-      message: fields.message,
-      testMode: true,
-      signers: signers,
-      files: [fileStream],
-    };
-
-    // removes testMode if not in dev env
-    if (!isDevEnv) delete requestData.testMode;
-
-    // verifies valid tokens
-    const hasValidTokens = validateETTSToken(fields?.stripeCustomerEmail);
+    // validate tokens
+    const hasValidTokens = await validateETTSToken(fields?.stripeCustomerEmail);
     if (!hasValidTokens) {
       console.debug(Constants.StripeInvalidTokensForETSSSession);
       return {
@@ -157,11 +134,52 @@ export const handler = async (event) => {
       };
     }
 
-    if (formFieldsPerDocument && formFieldsPerDocument.length > 0) {
-      requestData.formFieldsPerDocument = formFieldsPerDocument;
+    TurboSign.configure({
+      apiKey: EsignApiKey,
+      orgId: EsignOrgId,
+      senderEmail: fields?.stripeCustomerEmail,
+      senderName: CompanyName,
+    });
+
+    const recipients =
+      Array.isArray(signers) &&
+      signers.map((s, i) => ({
+        name: s?.name || s?.email_address,
+        email: s?.email_address,
+        signingOrder: s?.order || i + 1,
+      }));
+
+    let documentFields = [];
+
+    if (Array.isArray(formFieldsPerDocument)) {
+      documentFields = formFieldsPerDocument.map((field) => {
+        const recipientIndex = field.signer ?? 0;
+
+        const signerEmail = signers?.[recipientIndex]?.email_address;
+
+        return {
+          type: field.type || "signature",
+          page: field.page || 1,
+          x: Number(field.x),
+          y: Number(field.y),
+          width: Number(field.width || 200),
+          height: Number(field.height || 80),
+          recipientEmail: signerEmail,
+        };
+      });
     }
 
-    const response = await client.signatureRequestSend(requestData);
+    const result = await TurboSign.sendSignature({
+      file: pdfBuffer,
+      documentName: fields.title || "Document for Signature",
+      documentDescription:
+        fields.message ||
+        fields.subject ||
+        "Please review and sign this document",
+      recipients,
+      fields: documentFields,
+    });
+
     console.debug(Constants.EsignSentSuccessfully);
 
     // used to consume the token for ETSS
@@ -191,7 +209,8 @@ export const handler = async (event) => {
         code: 200,
         message: "Signature request sent",
         consumedTokens: tokenConsumedResponse?.consumedTokens,
-        signatureRequestId: response?.signatureRequest?.signatureRequestId,
+        documentId: result?.documentId,
+        signatureRequestId: result?.documentId,
       }),
     };
   } catch (err) {

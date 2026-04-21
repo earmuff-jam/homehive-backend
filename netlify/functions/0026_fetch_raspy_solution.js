@@ -15,7 +15,7 @@ import {
 import { populateCorsHeaders, validateRequest } from "./utils/utils";
 import Groq from "groq-sdk";
 
-const isDevEnv = process.env.DEV_ENV === "true";
+const isGroqDevEnv = process.env.GROQ_DEV_ENV === "true";
 
 const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY,
@@ -60,7 +60,7 @@ export const handler = async (event) => {
       };
     }
 
-    if (isDevEnv) {
+    if (isGroqDevEnv) {
       // return predefined dataset if dev env is present
       console.debug(Constants.RaspyDevEnvDetected);
       const selectedResponse = RaspyAIDevTestDataset[intent];

@@ -3,6 +3,7 @@
 export const Constants = {
   // Environment message
   IsDevEnv: "In development environment instance",
+  IsGroqDevEnv: "Running development environment for Raspy AI",
 
   // Raspy AI related message
   RaspyDevEnvDetected: "Detected dev environment. Using predefined responses",
@@ -48,6 +49,7 @@ export const Constants = {
   EsignMissingPayloadFromWebhookMessage:
     "Invalid webhook request. Missing payload from provided request",
   EsignCreateSigingRequestMessage: "Esign signing request created",
+  EsignReadingFileDataWithMessage: "Reading filedata for ",
   PaymentRecievedYetToProcess:
     "Payment recieved, but has not been completed yet from stripe",
 

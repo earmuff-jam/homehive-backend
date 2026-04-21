@@ -146,7 +146,7 @@ export const handler = async (event) => {
       signers.map((s, i) => ({
         name: s?.name || s?.email_address,
         email: s?.email_address,
-        signingOrder: s?.order || i + 1,
+        signingOrder: i + 1, // always the index so creator signs first; starting with 1
       }));
 
     let documentFields = [];

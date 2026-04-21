@@ -49,6 +49,7 @@ export const Constants = {
   EsignMissingPayloadFromWebhookMessage:
     "Invalid webhook request. Missing payload from provided request",
   EsignCreateSigingRequestMessage: "Esign signing request created",
+  EsignReadingFileDataWithMessage: "Reading filedata for ",
   PaymentRecievedYetToProcess:
     "Payment recieved, but has not been completed yet from stripe",
 

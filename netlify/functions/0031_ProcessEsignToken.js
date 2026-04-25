@@ -2,7 +2,7 @@
  * File : 0031_ProcessEsignToken.js
  *
  * This file is used to process the response from the webhook handler after
- * the ETSS payment has been completed. Instead of reusing the 0012_update_stripe_payments
+ * the ETSS payment has been completed. Instead of reusing the 0012_UpdateStripePayments
  * we are using a new handler, to process the data safely and securely.
  *
  * Must have feature flags enabled
@@ -57,7 +57,7 @@ const processEmailService = async (data) => {
   );
 
   const response = await fetch(
-    `${process.env.SITE_URL}/.netlify/functions/0001_send_email_fn`,
+    `${process.env.SITE_URL}/.netlify/functions/0001_SendCustomEmail`,
     {
       method: "POST",
       headers: {

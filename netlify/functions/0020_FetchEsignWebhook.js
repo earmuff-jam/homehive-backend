@@ -1,5 +1,5 @@
 // /**
-//  * File : 0020_fetch_goodsign_webhook.js
+//  * File : 0020_FetchEsignWebhook.js
 //  *
 //  * This file is used to fetch data from good sign when the event loop
 //  * is completed in good sign for Esign purposes. This functionality is

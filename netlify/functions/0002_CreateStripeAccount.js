@@ -1,8 +1,7 @@
 /**
- * File : 0025_create_stripe_subs_manage_link.js
- *
- * This file is used to allow users to manage their stripe subscription
- * for Rent App.
+ * File : 0002_CreateStripeAccount.js
+ * This file is used to connect to a stripe account.
+ * Must have feature flags enabled for this feature.
  */
 import { Constants } from "./utils/constants";
 import { populateCorsHeaders, validateRequest } from "./utils/utils";
@@ -33,41 +32,41 @@ export const handler = async (event) => {
   }
 
   try {
-    const { customerId } = JSON.parse(event.body);
-
-    if (!customerId) {
+    const { email } = JSON.parse(event.body);
+    if (!email) {
       console.debug(Constants.MissingRequiredFields);
       return {
         statusCode: 401,
         headers: populateCorsHeaders(),
-        body: JSON.stringify({ error: Constants.MethodNotAuthorized }),
+        body: JSON.stringify({ error: Constants.MissingRequiredFields }),
       };
     }
 
-    const session = await stripe.billingPortal.sessions.create({
-      customer: customerId,
-      return_url: process.env.BASE_SERVICE_URL + "/rent/settings?success=1",
+    const account = await stripe.accounts.create({
+      type: "custom",
+      country: "US",
+      email,
+      capabilities: {
+        card_payments: { requested: true }, // credit / debit cards
+        transfers: { requested: true },
+        us_bank_account_ach_payments: { requested: true }, // ach
+      },
     });
 
     return {
       statusCode: 200,
-      headers: {
-        ...populateCorsHeaders(),
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        url: session.url,
-      }),
+      headers: populateCorsHeaders(),
+      body: JSON.stringify({ accountId: account.id }),
     };
-  } catch (err) {
-    console.debug(Constants.SubscriptionFailureMessage, err);
+  } catch (error) {
+    console.debug(Constants.StripeFailedToCreateAccount, error);
     return {
-      statusCode: 500,
-      headers: {
-        ...populateCorsHeaders(),
-        "Content-Type": "application/json",
-      },
-      body: null,
+      statusCode: 400,
+      headers: populateCorsHeaders(),
+      body: JSON.stringify({
+        error: Constants.StripeFailedToCreateAccount,
+        errorDetails: error.message || Constants.UnknownErrorOccured,
+      }),
     };
   }
 };

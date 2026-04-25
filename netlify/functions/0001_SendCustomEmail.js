@@ -1,5 +1,5 @@
 /**
- * File : 0001_send_email_fn.js
+ * File : 0001_SendCustomEmail.js
  * Netlify Function to send emails using MailerSend (no templates).
  */
 import { Constants } from "./utils/constants";

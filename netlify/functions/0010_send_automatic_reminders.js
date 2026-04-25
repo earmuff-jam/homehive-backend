@@ -129,7 +129,7 @@ export const handler = async (event) => {
         console.debug(Constants.ARPSEmailServiceRequiredFieldsFound);
         emailPromises.push(
           fetch(
-            `${process.env.SITE_URL}/.netlify/functions/0001_send_email_fn`,
+            `${process.env.SITE_URL}/.netlify/functions/0001_SendCustomEmail`,
             {
               method: "POST",
               headers: {
@@ -226,7 +226,7 @@ const processEmailService = async (data) => {
   const generatedMsg = generateMessageBody(data);
 
   const response = await fetch(
-    `${process.env.SITE_URL}/.netlify/functions/0001_send_email_fn`,
+    `${process.env.SITE_URL}/.netlify/functions/0001_SendCustomEmail`,
     {
       method: "POST",
       headers: {

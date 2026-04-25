@@ -1,16 +1,11 @@
 // /**
-//  * File : 0015_fetch_esign_templates.js
-//  *
-//  * This file is used to fetch esign templates that are created
-//  * by the selected user. The backend responds with a list of all templates
-//  * and we transpose the response to return only the templates created
-//  * by the selected user.
-//  *
+//  * File : 0013_FetchEsignStatus.js
+//  * This file is used to to check the health of the third party.
 //  * Must have feature flags enabled for this feature.
 //  */
 // import { Constants } from "./utils/constants";
 // import {
-//   GoodSignTemplatesUrl,
+//   EsignWorkspaceUrl,
 //   populateCorsHeaders,
 //   validateRequest,
 // } from "./utils/utils";
@@ -37,34 +32,40 @@
 
 //   try {
 //     const AdminKey = process.env.ESIGN_ADMIN_KEY;
-//     const response = await fetch(GoodSignTemplatesUrl, {
-//       method: "GET",
+//     const response = await fetch(EsignWorkspaceUrl, {
 //       headers: {
-//         Authorization: `Bearer ${AdminKey}`,
+//         Authorization: AdminKey,
 //       },
 //     });
 
 //     if (!response.ok) {
-//       console.debug(Constants.InvalidRequest);
+//       console.debug(Constants.MissingRequiredFields);
 //       return {
 //         statusCode: 500,
-//         body: JSON.stringify({ error: Constants.InvalidRequest }),
+//         body: JSON.stringify({
+//           ready: false,
+//           error: Constants.MissingRequiredFields,
+//         }),
 //       };
 //     }
 
-//     const results = await response.json();
-
+//     const data = await response.json();
 //     return {
 //       statusCode: 200,
 //       body: JSON.stringify({
-//         templates: results,
+//         ready: true,
+//         results: data?.results,
 //       }),
 //     };
 //   } catch (err) {
-//     console.debug("failed to fetch esign templates. details ", err);
+//     console.debug(Constants.FailedToProcessDataError, err);
 //     return {
 //       statusCode: 500,
-//       body: JSON.stringify({ error: err.message }),
+//       body: JSON.stringify({
+//         ready: false,
+//         error: Constants.FailedToProcessDataError,
+//         errorDetails: err.message,
+//       }),
 //     };
 //   }
 // };

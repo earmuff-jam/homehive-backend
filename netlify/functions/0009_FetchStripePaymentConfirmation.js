@@ -1,5 +1,5 @@
 /**
- * File : 0009_fetch_stripe_payment_confirmation.js
+ * File : 0009_FetchStripePaymentConfirmation.js
  * This file is used to confirm payments
  * Must have feature flags enabled for this feature.
  */

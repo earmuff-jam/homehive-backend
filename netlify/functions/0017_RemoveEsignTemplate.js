@@ -1,5 +1,5 @@
 // /**
-//  * File : 0017_remove_esign_template.js
+//  * File : 0017_RemoveEsignTemplate.js
 //  * This file is used to remove esign template when the user
 //  * chooses to do such.
 //  * Must have feature flags enabled for this feature.

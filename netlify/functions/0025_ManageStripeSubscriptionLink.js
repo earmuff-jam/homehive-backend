@@ -1,6 +1,8 @@
 /**
- * File : 0005_fetch_stripe_bank_login_link.js
- * Allows connected Stripe Custom accounts to manage bank info, payouts, etc.
+ * File : 0025_ManageStripeSubscriptionLink.js
+ *
+ * This file is used to allow users to manage their stripe subscription
+ * for Rent App.
  */
 import { Constants } from "./utils/constants";
 import { populateCorsHeaders, validateRequest } from "./utils/utils";
@@ -26,43 +28,46 @@ export const handler = async (event) => {
     return {
       statusCode: 405,
       headers: populateCorsHeaders(),
-      body: JSON.stringify({
-        error: Constants.MethodNotAllowed,
-      }),
+      body: JSON.stringify({ error: Constants.MethodNotAllowed }),
     };
   }
 
   try {
-    const { accountId } = JSON.parse(event.body);
-    if (!accountId) {
+    const { customerId } = JSON.parse(event.body);
+
+    if (!customerId) {
       console.debug(Constants.MissingRequiredFields);
       return {
-        statusCode: 400,
+        statusCode: 401,
         headers: populateCorsHeaders(),
-        body: JSON.stringify({
-          error: Constants.MissingRequiredFields,
-        }),
+        body: JSON.stringify({ error: Constants.MethodNotAuthorized }),
       };
     }
 
-    const accountLink = await stripe.accountLinks.create({
-      account: accountId,
-      refresh_url: process.env.BASE_SERVICE_URL + "/rent/settings?refresh=1",
+    const session = await stripe.billingPortal.sessions.create({
+      customer: customerId,
       return_url: process.env.BASE_SERVICE_URL + "/rent/settings?success=1",
-      type: "account_update",
     });
 
     return {
       statusCode: 200,
-      headers: populateCorsHeaders(),
-      body: JSON.stringify({ url: accountLink.url }),
+      headers: {
+        ...populateCorsHeaders(),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        url: session.url,
+      }),
     };
   } catch (err) {
-    console.debug("Failed to create stripe login link. details ", err);
+    console.debug(Constants.SubscriptionFailureMessage, err);
     return {
-      statusCode: 400,
-      headers: populateCorsHeaders(),
-      body: JSON.stringify({ error: err.message }),
+      statusCode: 500,
+      headers: {
+        ...populateCorsHeaders(),
+        "Content-Type": "application/json",
+      },
+      body: null,
     };
   }
 };

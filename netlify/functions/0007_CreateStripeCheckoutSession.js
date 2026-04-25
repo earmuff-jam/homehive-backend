@@ -1,5 +1,5 @@
 /**
- * File : 0007_create_stripe_checkout_session.js
+ * File : 0007_CreateStripeCheckoutSession.js
  *
  * This file is used to allow tenants to perform checkout session.
  *

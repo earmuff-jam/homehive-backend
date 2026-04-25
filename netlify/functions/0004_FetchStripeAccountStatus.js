@@ -1,6 +1,6 @@
 /**
- * File : 0002_create_stripe_account.js
- * This file is used to connect to a stripe account.
+ * File : 0004_FetchStripeAccountStatus.js
+ * This file is used to verify a users account status in stripe
  * Must have feature flags enabled for this feature.
  */
 import { Constants } from "./utils/constants";
@@ -32,8 +32,8 @@ export const handler = async (event) => {
   }
 
   try {
-    const { email } = JSON.parse(event.body);
-    if (!email) {
+    const { accountId } = JSON.parse(event.body);
+    if (!accountId) {
       console.debug(Constants.MissingRequiredFields);
       return {
         statusCode: 401,
@@ -41,32 +41,46 @@ export const handler = async (event) => {
         body: JSON.stringify({ error: Constants.MissingRequiredFields }),
       };
     }
-
-    const account = await stripe.accounts.create({
-      type: "custom",
-      country: "US",
-      email,
-      capabilities: {
-        card_payments: { requested: true }, // credit / debit cards
-        transfers: { requested: true },
-        us_bank_account_ach_payments: { requested: true }, // ach
-      },
+    const account = await stripe.accounts.retrieve(accountId, {
+      expand: ["external_accounts"],
     });
+
+    const status = {
+      details_submitted: account.details_submitted,
+      charges_enabled: account.charges_enabled,
+      payouts_enabled: account.payouts_enabled,
+    };
+
+    const bank = account.external_accounts?.data?.find(
+      (acc) => acc.object === "bank_account",
+    );
 
     return {
       statusCode: 200,
       headers: populateCorsHeaders(),
-      body: JSON.stringify({ accountId: account.id }),
+      body: JSON.stringify({
+        status: status,
+        bankAccount: bank
+          ? {
+              stripeAccountHolderLastFour: bank.last4,
+              bank_name: bank.bank_name,
+              currency: bank.currency,
+              stripeAccountType: bank?.account_holder_type,
+              stripeAccountHolderName: bank.account_holder_name,
+              stripeRoutingNumber: bank.routing_number,
+              stripeBankAccountName: bank?.bank_name,
+              stripeBankAccountCountry: bank?.country,
+              stripeBankAccountCurrencyMode: bank?.currency,
+            }
+          : null,
+      }),
     };
   } catch (error) {
-    console.debug(Constants.StripeFailedToCreateAccount, error);
+    console.debug("failed to link stripe account. details ", error);
     return {
       statusCode: 400,
       headers: populateCorsHeaders(),
-      body: JSON.stringify({
-        error: Constants.StripeFailedToCreateAccount,
-        errorDetails: error.message || Constants.UnknownErrorOccured,
-      }),
+      body: JSON.stringify({ error: error.message }),
     };
   }
 };

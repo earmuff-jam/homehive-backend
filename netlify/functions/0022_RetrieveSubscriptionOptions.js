@@ -1,5 +1,5 @@
 /**
- * File : 0022_retrieve_subscriptions_options.js
+ * File : 0022_RetrieveSubscriptionOptions.js
  *
  * This file is used to retrieve subscription options for RentApp
  *

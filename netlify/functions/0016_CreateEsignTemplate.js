@@ -1,5 +1,5 @@
 // /**
-//  * File : 0016_create_esign_template.js
+//  * File : 0016_CreateEsignTemplate.js
 //  * This file is used to create a new esign template for a selected user.
 //  * Must have feature flags enabled for this feature.
 //  */

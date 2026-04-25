@@ -1,11 +1,16 @@
 // /**
-//  * File : 0013_fetch_esign_status.js
-//  * This file is used to to check the health of the third party.
+//  * File : 0015_FetchEsignTemplates.js
+//  *
+//  * This file is used to fetch esign templates that are created
+//  * by the selected user. The backend responds with a list of all templates
+//  * and we transpose the response to return only the templates created
+//  * by the selected user.
+//  *
 //  * Must have feature flags enabled for this feature.
 //  */
 // import { Constants } from "./utils/constants";
 // import {
-//   EsignWorkspaceUrl,
+//   GoodSignTemplatesUrl,
 //   populateCorsHeaders,
 //   validateRequest,
 // } from "./utils/utils";
@@ -32,40 +37,34 @@
 
 //   try {
 //     const AdminKey = process.env.ESIGN_ADMIN_KEY;
-//     const response = await fetch(EsignWorkspaceUrl, {
+//     const response = await fetch(GoodSignTemplatesUrl, {
+//       method: "GET",
 //       headers: {
-//         Authorization: AdminKey,
+//         Authorization: `Bearer ${AdminKey}`,
 //       },
 //     });
 
 //     if (!response.ok) {
-//       console.debug(Constants.MissingRequiredFields);
+//       console.debug(Constants.InvalidRequest);
 //       return {
 //         statusCode: 500,
-//         body: JSON.stringify({
-//           ready: false,
-//           error: Constants.MissingRequiredFields,
-//         }),
+//         body: JSON.stringify({ error: Constants.InvalidRequest }),
 //       };
 //     }
 
-//     const data = await response.json();
+//     const results = await response.json();
+
 //     return {
 //       statusCode: 200,
 //       body: JSON.stringify({
-//         ready: true,
-//         results: data?.results,
+//         templates: results,
 //       }),
 //     };
 //   } catch (err) {
-//     console.debug(Constants.FailedToProcessDataError, err);
+//     console.debug("failed to fetch esign templates. details ", err);
 //     return {
 //       statusCode: 500,
-//       body: JSON.stringify({
-//         ready: false,
-//         error: Constants.FailedToProcessDataError,
-//         errorDetails: err.message,
-//       }),
+//       body: JSON.stringify({ error: err.message }),
 //     };
 //   }
 // };

@@ -1,5 +1,5 @@
 // /**
-//  * File : 0014_create_esign_workspace.js
+//  * File : 0014_CreateEsignWorkspace.js
 //  * This file is used to create workspace for each user.
 //  * Must have feature flags enabled for this feature.
 //  */

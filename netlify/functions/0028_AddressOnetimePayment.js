@@ -137,7 +137,7 @@ export const handler = async (event) => {
       );
 
       const response = await fetch(
-        `${process.env.SITE_URL}/.netlify/functions/0001_send_email_fn`,
+        `${process.env.SITE_URL}/.netlify/functions/0001_SendCustomEmail`,
         {
           method: "POST",
           headers: {

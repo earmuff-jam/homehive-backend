@@ -1,5 +1,5 @@
 /**
- * File : 0006_fetch_stripe_recent_transactions.js
+ * File : 0006_FetchRecentStripeTransactions.js
  *
  * This file is used to display recent stripe transactions made by the
  * selected user

@@ -1,5 +1,5 @@
 /**
- * File : 0003_link_stripe_account.js
+ * File : 0003_LinkStripeAccount.js
  * This file is used to link stripe account to a user.
  * Must have feature flags enabled for this feature.
  */

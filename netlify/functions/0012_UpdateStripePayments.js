@@ -1,5 +1,5 @@
 /**
- * File : 0012_update_stripe_payments.js
+ * File : 0012_UpdateStripePayments.js
  *
  * This file is used to update the database with new stripe payment
  * information once the payment has been completed. This is an
@@ -93,7 +93,7 @@ export const handler = async (event) => {
       }
 
       const response = await fetch(
-        `${process.env.SITE_URL}/.netlify/functions/0001_send_email_fn`,
+        `${process.env.SITE_URL}/.netlify/functions/0001_SendCustomEmail`,
         {
           method: "POST",
           headers: {

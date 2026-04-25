@@ -108,6 +108,9 @@ export const Constants = {
   StripeFailedToCreateAccount: "Failed to create stripe account",
   StripeFailedToProcessPaymentConfirmation:
     "Failed to process stripe payment confirmation",
+  StripeFetchRecentTransactionsInit: "Retrieving list of recent transactions",
+  StripeFailedToFetchRecentTransactions:
+    "Failed to process recent transactions",
 
   StripePaymentStatusCompleted: "paid",
   StripePaymentStatusManualStatus: "manual",

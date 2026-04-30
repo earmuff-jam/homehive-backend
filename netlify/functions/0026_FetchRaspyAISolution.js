@@ -1,5 +1,5 @@
 /**
- * File : 0026_fetch_raspy_solution.js
+ * File : 0026_FetchRaspyAISolution.js
  *
  * This file is used to send and recieve question and
  * answer to AI chat Raspy.

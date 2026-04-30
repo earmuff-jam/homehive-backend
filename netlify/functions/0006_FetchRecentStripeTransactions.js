@@ -1,6 +1,9 @@
 /**
- * File : 0003_link_stripe_account.js
- * This file is used to link stripe account to a user.
+ * File : 0006_FetchRecentStripeTransactions.js
+ *
+ * This file is used to display recent stripe transactions for
+ * the provided stripe account id
+ *
  * Must have feature flags enabled for this feature.
  */
 import { Constants } from "./utils/constants";
@@ -22,43 +25,46 @@ export const handler = async (event) => {
     };
   }
 
-  if (event.httpMethod !== "POST") {
-    console.debug(Constants.MethodNotAllowed);
-    return {
-      statusCode: 405,
-      headers: populateCorsHeaders(),
-      body: JSON.stringify({ error: Constants.MethodNotAllowed }),
-    };
-  }
-
   try {
-    const { accountId } = JSON.parse(event.body);
-    if (!accountId) {
+    const { userId, stripeAccountId } = JSON.parse(event.body);
+
+    if (!userId || !stripeAccountId) {
       console.debug(Constants.MissingRequiredFields);
       return {
-        statusCode: 401,
+        statusCode: 400,
         headers: populateCorsHeaders(),
         body: JSON.stringify({ error: Constants.MissingRequiredFields }),
       };
     }
-    const accountLink = await stripe.accountLinks.create({
-      account: accountId,
-      refresh_url: process.env.BASE_SERVICE_URL + "/rent/settings?refresh=1",
-      return_url: process.env.BASE_SERVICE_URL + "/rent/settings?success=1",
-      type: "account_onboarding",
-    });
 
+    // fetch recent transactions made on stripe
+    const transactions = await stripe.paymentIntents.list(
+      {
+        limit: 10,
+        expand: ["data.payment_method"],
+      },
+      {
+        stripeAccount: stripeAccountId,
+      },
+    );
+
+    console.debug(Constants.StripeFetchRecentTransactionsInit);
     return {
       statusCode: 200,
       headers: populateCorsHeaders(),
-      body: JSON.stringify({ url: accountLink.url }),
+      body: JSON.stringify({
+        transactions,
+      }),
     };
-  } catch (err) {
-    console.debug("failed to link stripe account. details ", err);
+  } catch (error) {
+    console.debug(Constants.StripeFailedToFetchRecentTransactions, error);
     return {
-      statusCode: 400,
+      statusCode: 500,
       headers: populateCorsHeaders(),
-      body: JSON.stringify({ error: err.message }),
+      body: JSON.stringify({
+        error: Constants.StripeFailedToFetchRecentTransactions,
+        errorDetails: error.message,
+      }),
     };
   }
 };

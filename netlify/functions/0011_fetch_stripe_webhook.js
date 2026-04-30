@@ -225,7 +225,7 @@ const processSubscriptionData = async (type, data) => {
 
   try {
     const response = await fetch(
-      `${process.env.SITE_URL}/.netlify/functions/0024_update_user_subscription`,
+      `${process.env.SITE_URL}/.netlify/functions/0024_UpdateUserSubscription`,
       {
         method: "POST",
         headers: {
@@ -306,7 +306,7 @@ const processRentalPaymentsData = async (stripeEventType, data) => {
           process.env.SITE_URL,
         );
         const response = await fetch(
-          `${process.env.SITE_URL}/.netlify/functions/0012_update_stripe_payments`,
+          `${process.env.SITE_URL}/.netlify/functions/0012_UpdateStripePayments`,
           {
             method: "POST",
             headers: {
@@ -354,7 +354,7 @@ const processRentalPaymentsData = async (stripeEventType, data) => {
           process.env.SITE_URL,
         );
         const response = await fetch(
-          `${process.env.SITE_URL}/.netlify/functions/0012_update_stripe_payments`,
+          `${process.env.SITE_URL}/.netlify/functions/0012_UpdateStripePayments`,
           {
             method: "POST",
             headers: {
@@ -387,7 +387,7 @@ const processRentalPaymentsData = async (stripeEventType, data) => {
         updatedOn: dayjs().toISOString(),
       };
       const response = await fetch(
-        `${process.env.SITE_URL}/.netlify/functions/0012_update_stripe_payments`,
+        `${process.env.SITE_URL}/.netlify/functions/0012_UpdateStripePayments`,
         {
           method: "POST",
           headers: {

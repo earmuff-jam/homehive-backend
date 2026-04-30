@@ -1,5 +1,5 @@
 /**
- * File : 0002_generate_pdf_fn.js
+ * File : 0019_GenerateCustomInvoice.js
  * Netlify Function to generate a PDF and return it as a response.
  */
 import dayjs from "dayjs";

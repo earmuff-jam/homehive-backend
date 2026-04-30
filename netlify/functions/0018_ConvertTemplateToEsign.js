@@ -1,5 +1,5 @@
 // /**
-//  * File : 0018_template_to_esign_document.js
+//  * File : 0018_ConvertTemplateToEsign.js
 //  *
 //  * Creates a signing request from an uploaded document
 //  * and returns an editor URL to modify fields before sending.
@@ -90,7 +90,7 @@
 //         { propertyId: propertyId },
 //         { primaryTenantId: primaryTenantId },
 //       ],
-//       webhook: `${process.env.SITE_URL}/.netlify/functions/0020_fetch_goodsign_webhook`,
+//       webhook: `${process.env.SITE_URL}/.netlify/functions/0020_FetchEsignWebhook`,
 //       cc_email: additional_senders,
 //       smsverify: false,
 //       send_in_order: false,

@@ -1,6 +1,7 @@
 /**
- * File : 0005_fetch_stripe_bank_login_link.js
- * Allows connected Stripe Custom accounts to manage bank info, payouts, etc.
+ * File : 0003_LinkStripeAccount.js
+ * This file is used to link stripe account to a user.
+ * Must have feature flags enabled for this feature.
  */
 import { Constants } from "./utils/constants";
 import { populateCorsHeaders, validateRequest } from "./utils/utils";
@@ -26,9 +27,7 @@ export const handler = async (event) => {
     return {
       statusCode: 405,
       headers: populateCorsHeaders(),
-      body: JSON.stringify({
-        error: Constants.MethodNotAllowed,
-      }),
+      body: JSON.stringify({ error: Constants.MethodNotAllowed }),
     };
   }
 
@@ -37,19 +36,16 @@ export const handler = async (event) => {
     if (!accountId) {
       console.debug(Constants.MissingRequiredFields);
       return {
-        statusCode: 400,
+        statusCode: 401,
         headers: populateCorsHeaders(),
-        body: JSON.stringify({
-          error: Constants.MissingRequiredFields,
-        }),
+        body: JSON.stringify({ error: Constants.MissingRequiredFields }),
       };
     }
-
     const accountLink = await stripe.accountLinks.create({
       account: accountId,
       refresh_url: process.env.BASE_SERVICE_URL + "/rent/settings?refresh=1",
       return_url: process.env.BASE_SERVICE_URL + "/rent/settings?success=1",
-      type: "account_update",
+      type: "account_onboarding",
     });
 
     return {
@@ -58,7 +54,7 @@ export const handler = async (event) => {
       body: JSON.stringify({ url: accountLink.url }),
     };
   } catch (err) {
-    console.debug("Failed to create stripe login link. details ", err);
+    console.debug("failed to link stripe account. details ", err);
     return {
       statusCode: 400,
       headers: populateCorsHeaders(),

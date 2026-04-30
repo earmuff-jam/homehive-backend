@@ -1,5 +1,5 @@
 /**
- * File : 0021_create_stripe_customer_link.js
+ * File : 0021_CreateStripeCustomerLink.js
  *
  * This file is used to create stripe customer link for RentApp product.
  * This function allows customers to subscribe with the RentApp product.

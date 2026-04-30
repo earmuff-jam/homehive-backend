@@ -1,5 +1,5 @@
 /**
- * File : 0024_update_user_subscription.js
+ * File : 0024_UpdateUserSubscription.js
  *
  * This file is used to update firestore as user subscription changes
  * over the course of time. This function is responsible to update user subscription.
@@ -94,7 +94,7 @@ export const handler = async (event) => {
       );
 
       const response = await fetch(
-        `${process.env.SITE_URL}/.netlify/functions/0001_send_email_fn`,
+        `${process.env.SITE_URL}/.netlify/functions/0001_SendCustomEmail`,
         {
           method: "POST",
           headers: {

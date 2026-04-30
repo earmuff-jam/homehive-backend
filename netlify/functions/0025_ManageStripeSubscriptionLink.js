@@ -1,5 +1,5 @@
 /**
- * File : 0025_create_stripe_subs_manage_link.js
+ * File : 0025_ManageStripeSubscriptionLink.js
  *
  * This file is used to allow users to manage their stripe subscription
  * for Rent App.

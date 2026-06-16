@@ -50,8 +50,10 @@ export const handler = async (event) => {
     });
 
     const plans = prices.data
-      .filter((price) =>
-        AllowedProductNamesForSubscription.includes(price.product.name),
+      .filter(
+        (price) =>
+          price.product.active &&
+          AllowedProductNamesForSubscription.includes(price.product.name),
       )
       .map((price) => ({
         productId: price.product.id,

@@ -37,6 +37,7 @@ export const Role = {
 export const ARPSReminderSettings = {
   RentReminderDays: [7, 3, 1, 0],
   AutoRenewLeaseReminderDays: [0, 30],
+  AutoImageCleanupDays: 90,
 };
 
 // EsignTokenPriceMap ...
@@ -103,6 +104,7 @@ export const initializeFirebase = (isDevEnv = false) => {
         credential: admin.credential.cert({
           projectId: process.env["FIREBASE_ADMIN_PROJECT_ID"],
           clientEmail: process.env["FIREBASE_ADMIN_CLIENT_EMAIL"],
+          storageBucket: process.env["FIREBASE_ADMIN_STORAGE_BUCKET"],
           privateKey: process.env.FIREBASE_ADMIN_PRIVATE_KEY.replace(
             /\\n/gm,
             "\n",

@@ -1,5 +1,5 @@
 /**
- * File : 0032_ApplyImageCleanup.js
+ * File : 0032_ArchiveMaintenaceRecordImages.js
  *
  * This file is used to perform cleanup for all existing images associated to
  * a selected UUID. When the UUID is passed in and the time limit of 90 days
@@ -37,8 +37,10 @@ export const handler = async (event) => {
   }
 
   try {
+    debugger;
     const today = dayjs();
     const emailPromises = [];
+    const archivedMaintenanceIDs = [];
     const autoCleanupDays = ARPSReminderSettings.AutoImageCleanupDays;
 
     db = initializeFirebase(isDevEnv);
@@ -58,11 +60,13 @@ export const handler = async (event) => {
 
       if (!propertyId || !tenantEmail) {
         console.debug(Constants.ARPSMissingRequiredFields);
-        break; // eat the exception; does not send notification
+        continue; // eat the exception; does not send notification
       }
 
+      debugger;
       // remove images from cloud storage with associated maintenanceID
       await removeAssociatedImages(propertyId, id);
+      archivedMaintenanceIDs.push(id);
 
       const { subject, text } = generateEmailNotificationMessage(
         tenantEmail,
@@ -89,7 +93,8 @@ export const handler = async (event) => {
       );
     }
 
-    // Wait for all emails to be sent
+    await updateArchivedMaintenanceRecords(archivedMaintenanceIDs);
+
     const results = await Promise.allSettled(emailPromises);
 
     results.forEach((result, index) => {
@@ -115,6 +120,37 @@ export const handler = async (event) => {
       headers: populateCorsHeaders(),
       body: `Error: ${error.message}`,
     };
+  }
+};
+
+// updateArchivedMaintenanceRecords ...
+// defines a function that updates the maintenance record after the images are Archived
+const updateArchivedMaintenanceRecords = async (
+  archivedMaintenanceIDs = [],
+) => {
+  if (archivedMaintenanceIDs?.length <= 0) {
+    console.debug(Constants.ARPSArchiedMaintenanceRecordsNotFound);
+    return;
+  }
+
+  console.debug(Constants.ARPSArchiedMaintenanceRecordsFound);
+  for (const maintenanceRecordID of archivedMaintenanceIDs) {
+    try {
+      const updatedMaintenanceDocs = {
+        isImagesArchived: true,
+        updatedBy: Constants.ARPSAdminSystemUpdator,
+        updatedOn: dayjs().toISOString(),
+      };
+
+      await db
+        .collection("maintenance")
+        .doc(maintenanceRecordID)
+        .set(updatedMaintenanceDocs, { merge: true });
+
+      console.debug(Constants.ARPSArchivedMaintenanceRecordImages);
+    } catch (err) {
+      console.debug("Unable to archieve maintenance record. Details: ", err);
+    }
   }
 };
 

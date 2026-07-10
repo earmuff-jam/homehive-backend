@@ -17,7 +17,7 @@ jobs:
           curl -X POST \
             -H "Content-Type: application/json" \
             -d "{\"adminKey\":\"${{ secrets.ADMIN_KEY }}\",\"integrationKey\":\"${{ secrets.INTEGRATION_KEY }}\"}" \
-            "${{ secrets.TEST_SITE_URL }}/.netlify/functions/0032_ApplyImageCleanup"
+            "${{ secrets.TEST_SITE_URL }}/.netlify/functions/0032_ArchiveMaintenaceRecordImages"
 
   trigger-prod-arps:
     runs-on: ubuntu-latest
@@ -27,4 +27,4 @@ jobs:
           curl -X POST \
             -H "Content-Type: application/json" \
             -d "{\"adminKey\":\"${{ secrets.ADMIN_KEY }}\",\"integrationKey\":\"${{ secrets.INTEGRATION_KEY }}\"}" \
-            "${{ secrets.PROD_SITE_URL }}/.netlify/functions/0032_ApplyImageCleanup"
+            "${{ secrets.PROD_SITE_URL }}/.netlify/functions/0032_ArchiveMaintenaceRecordImages"

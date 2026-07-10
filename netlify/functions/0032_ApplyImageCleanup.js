@@ -14,6 +14,7 @@ import { Constants } from "./utils/constants";
 import {
   ARPSReminderSettings,
   initializeFirebase,
+  initializeFirebaseStorage,
   populateCorsHeaders,
 } from "./utils/utils";
 
@@ -41,11 +42,11 @@ export const handler = async (event) => {
     const autoCleanupDays = ARPSReminderSettings.AutoImageCleanupDays;
 
     db = initializeFirebase(isDevEnv);
-    storageBucket = admin.storage().bucket();
+    storageBucket = initializeFirebaseStorage(); // run after firebase init
 
     const maintenanceRecordsSnapshots =
-      fetchMaintenanceRecordSnapshots(autoCleanupDays);
-    const maintenanceRecordSize = maintenanceRecordsSnapshots.size();
+      await fetchMaintenanceRecordSnapshots(autoCleanupDays);
+    const maintenanceRecordSize = maintenanceRecordsSnapshots.size;
 
     console.debug(
       `Processing ${maintenanceRecordSize} at ${today} for image cleanup`,
@@ -61,7 +62,7 @@ export const handler = async (event) => {
       }
 
       // remove images from cloud storage with associated maintenanceID
-      removeAssociatedImages(propertyId, id);
+      await removeAssociatedImages(propertyId, id);
 
       const { subject, text } = generateEmailNotificationMessage(
         tenantEmail,
@@ -120,7 +121,7 @@ export const handler = async (event) => {
 // removeAssociatedImages ...
 // defines a function that removes files with associated id from cloud storage
 const removeAssociatedImages = async (propertyID, maintenanceID) => {
-  await bucket.deleteFiles({
+  await storageBucket.deleteFiles({
     prefix: `properties/${propertyID}/maintenance/${maintenanceID}/`,
   });
 

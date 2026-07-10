@@ -98,23 +98,30 @@ export const initializeFirebase = (isDevEnv = false) => {
 
       admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
+        storageBucket: process.env["FIREBASE_ADMIN_STORAGE_BUCKET"],
       });
     } else {
       admin.initializeApp({
         credential: admin.credential.cert({
           projectId: process.env["FIREBASE_ADMIN_PROJECT_ID"],
           clientEmail: process.env["FIREBASE_ADMIN_CLIENT_EMAIL"],
-          storageBucket: process.env["FIREBASE_ADMIN_STORAGE_BUCKET"],
           privateKey: process.env.FIREBASE_ADMIN_PRIVATE_KEY.replace(
             /\\n/gm,
             "\n",
           ).replace(/\\\\n/gm, "\n"),
         }),
+        storageBucket: process.env["FIREBASE_ADMIN_STORAGE_BUCKET"],
       });
     }
   }
 
   return admin.firestore();
+};
+
+// initializeFirebaseStorage ...
+// defines a function that initializes firebase storage bucket
+export const initializeFirebaseStorage = () => {
+  return admin.storage().bucket();
 };
 
 // populateCorsHeaders ...

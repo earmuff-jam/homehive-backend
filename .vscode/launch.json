@@ -2,14 +2,14 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Linux Debug Netlify Functions",
+      "name": "Linux Debug netlify functions",
       "type": "node",
       "request": "launch",
-      "runtimeExecutable": "bash",
-      "runtimeArgs": [
-        "-c",
-        "source ~/.nvm/nvm.sh && node --inspect $(which netlify) dev --port 4225"
-      ],
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["--inspect-brk"],
+      "program": "${workspaceFolder}/node_modules/netlify-cli/bin/run",
+      "args": ["dev", "--port", "4225"],
+      "autoAttachChildProcesses": true,
       "console": "integratedTerminal",
       "skipFiles": ["<node_internals>/**"]
     },

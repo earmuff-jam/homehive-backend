@@ -44,9 +44,9 @@ export const ARPSReminderSettings = {
 // defines the token price map settings for ETSS
 // amount is stored in dollars
 export const EsignTokenPriceMap = {
-  BASIC: 14.99,
-  PREMIUM: 24.99,
-  ULTRA: 59.99,
+  BASIC: 4.99,
+  PREMIUM: 6.99,
+  ULTRA: 9.99,
 };
 
 // EsignTokenPriceInCreditLabelMap ...

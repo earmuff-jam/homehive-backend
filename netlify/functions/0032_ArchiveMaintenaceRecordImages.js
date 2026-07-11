@@ -37,7 +37,6 @@ export const handler = async (event) => {
   }
 
   try {
-    debugger;
     const today = dayjs();
     const emailPromises = [];
     const archivedMaintenanceIDs = [];
@@ -63,7 +62,6 @@ export const handler = async (event) => {
         continue; // eat the exception; does not send notification
       }
 
-      debugger;
       // remove images from cloud storage with associated maintenanceID
       await removeAssociatedImages(propertyId, id);
       archivedMaintenanceIDs.push(id);
@@ -141,7 +139,7 @@ const updateArchivedMaintenanceRecords = async (
         updatedBy: Constants.ARPSAdminSystemUpdator,
         updatedOn: dayjs().toISOString(),
       };
-
+      
       await db
         .collection("maintenance")
         .doc(maintenanceRecordID)
@@ -171,6 +169,7 @@ const fetchMaintenanceRecordSnapshots = async (autoCleanupDays) => {
   const data = await db
     .collection("maintenance")
     .where("status", "==", "Completed")
+    .where("isImagesArchived", "!=", false)
     .where(
       "updatedOn",
       "<=",

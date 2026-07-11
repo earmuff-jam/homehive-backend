@@ -176,12 +176,14 @@ export const Constants = {
   ETSSTokenConsumedSuccessfully: "One token was consumed successfully",
 
   // ARPS Image Archieve Messages
+  ARPSArchivedMaintenanceRecordsFound:
+    "Found maintenance records with already archived images.",
   ARPSArchiedMaintenanceRecordsNotFound:
-    "No maintenance records found to archieve",
-  ARPSArchiedMaintenanceRecordsFound:
-    "Found maintenance records with archieved images",
-  ARPSArchievedMaintenanceRecordImages:
-    "Successfully archieved images for selected maintenance record",
+    "No maintenance records found to archive",
+  ARPSArchiveEligibleMaintenanceRecordFound:
+    "Found maintenance records with images ready to be archived.",
+  ARPSArchivedMaintenanceRecordImages:
+    "Successfully archived images for selected maintenance record",
 
   // Common Messages
   SuccessResponse: "Success",

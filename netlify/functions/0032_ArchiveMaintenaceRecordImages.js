@@ -55,11 +55,21 @@ export const handler = async (event) => {
 
     for (const maintenanceRecordDocs of maintenanceRecordsSnapshots.docs) {
       const maintenanceRecord = maintenanceRecordDocs?.data();
-      const { id, propertyId, tenantEmail } = maintenanceRecord;
+      const {
+        id,
+        propertyId,
+        tenantEmail,
+        isImagesArchived = false, // supports backward compatibility
+      } = maintenanceRecord;
 
       if (!propertyId || !tenantEmail) {
         console.debug(Constants.ARPSMissingRequiredFields);
         continue; // eat the exception; does not send notification
+      }
+
+      if (isImagesArchived) {
+        console.debug(Constants.ARPSArchivedMaintenanceRecordsFound);
+        continue;
       }
 
       // remove images from cloud storage with associated maintenanceID
@@ -131,7 +141,7 @@ const updateArchivedMaintenanceRecords = async (
     return;
   }
 
-  console.debug(Constants.ARPSArchiedMaintenanceRecordsFound);
+  console.debug(Constants.ARPSArchiveEligibleMaintenanceRecordFound);
   for (const maintenanceRecordID of archivedMaintenanceIDs) {
     try {
       const updatedMaintenanceDocs = {
@@ -139,7 +149,7 @@ const updateArchivedMaintenanceRecords = async (
         updatedBy: Constants.ARPSAdminSystemUpdator,
         updatedOn: dayjs().toISOString(),
       };
-      
+
       await db
         .collection("maintenance")
         .doc(maintenanceRecordID)
@@ -169,7 +179,6 @@ const fetchMaintenanceRecordSnapshots = async (autoCleanupDays) => {
   const data = await db
     .collection("maintenance")
     .where("status", "==", "Completed")
-    .where("isImagesArchived", "!=", false)
     .where(
       "updatedOn",
       "<=",

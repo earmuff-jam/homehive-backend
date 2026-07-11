@@ -1,0 +1,30 @@
+name: Image Cleanup Trigger
+
+# limit the permission to only read the github repo
+permissions:
+  contents: read
+
+on:
+  schedule:
+    - cron: "0 8 * * *" # every day at 8 AM UTC
+
+jobs:
+  trigger-test-arps:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger ARPS Image Cleanup Handler Test Env
+        run: |
+          curl -X POST \
+            -H "Content-Type: application/json" \
+            -d "{\"adminKey\":\"${{ secrets.ADMIN_KEY }}\",\"integrationKey\":\"${{ secrets.INTEGRATION_KEY }}\"}" \
+            "${{ secrets.TEST_SITE_URL }}/.netlify/functions/0032_ArchiveMaintenaceRecordImages"
+
+  trigger-prod-arps:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger ARPS Image Cleanup Handler Prod Env
+        run: |
+          curl -X POST \
+            -H "Content-Type: application/json" \
+            -d "{\"adminKey\":\"${{ secrets.ADMIN_KEY }}\",\"integrationKey\":\"${{ secrets.INTEGRATION_KEY }}\"}" \
+            "${{ secrets.PROD_SITE_URL }}/.netlify/functions/0032_ArchiveMaintenaceRecordImages"

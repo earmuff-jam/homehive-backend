@@ -37,15 +37,16 @@ export const Role = {
 export const ARPSReminderSettings = {
   RentReminderDays: [7, 3, 1, 0],
   AutoRenewLeaseReminderDays: [0, 30],
+  AutoImageCleanupDays: 90,
 };
 
 // EsignTokenPriceMap ...
 // defines the token price map settings for ETSS
 // amount is stored in dollars
 export const EsignTokenPriceMap = {
-  BASIC: 14.99,
-  PREMIUM: 24.99,
-  ULTRA: 59.99,
+  BASIC: 4.99,
+  PREMIUM: 6.99,
+  ULTRA: 9.99,
 };
 
 // EsignTokenPriceInCreditLabelMap ...
@@ -97,6 +98,7 @@ export const initializeFirebase = (isDevEnv = false) => {
 
       admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
+        storageBucket: process.env["FIREBASE_ADMIN_STORAGE_BUCKET"],
       });
     } else {
       admin.initializeApp({
@@ -108,11 +110,18 @@ export const initializeFirebase = (isDevEnv = false) => {
             "\n",
           ).replace(/\\\\n/gm, "\n"),
         }),
+        storageBucket: process.env["FIREBASE_ADMIN_STORAGE_BUCKET"],
       });
     }
   }
 
   return admin.firestore();
+};
+
+// initializeFirebaseStorage ...
+// defines a function that initializes firebase storage bucket
+export const initializeFirebaseStorage = () => {
+  return admin.storage().bucket();
 };
 
 // populateCorsHeaders ...

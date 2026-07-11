@@ -5,6 +5,8 @@ export const Constants = {
   IsDevEnv: "In development environment instance",
   IsGroqDevEnv: "Running development environment for Raspy AI",
 
+  ARPSAdminSystemUpdator: "ARPS SYSTEM",
+
   // Raspy AI related message
   RaspyDevEnvDetected: "Detected dev environment. Using predefined responses",
   RaspyUserIntentDetected:
@@ -172,6 +174,16 @@ export const Constants = {
   FailedToReceievePdf: "Unable to fetch selected pdf",
   EsignSentSuccessfully: "Signature request was sent successfully",
   ETSSTokenConsumedSuccessfully: "One token was consumed successfully",
+
+  // ARPS Image Archieve Messages
+  ARPSArchivedMaintenanceRecordsFound:
+    "Found maintenance records with already archived images.",
+  ARPSArchiedMaintenanceRecordsNotFound:
+    "No maintenance records found to archive",
+  ARPSArchiveEligibleMaintenanceRecordFound:
+    "Found maintenance records with images ready to be archived.",
+  ARPSArchivedMaintenanceRecordImages:
+    "Successfully archived images for selected maintenance record",
 
   // Common Messages
   SuccessResponse: "Success",

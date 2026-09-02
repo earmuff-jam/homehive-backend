@@ -17,7 +17,7 @@ jobs:
           curl -X POST \
             -H "Content-Type: application/json" \
             -d "{\"adminKey\":\"${{ secrets.ADMIN_KEY }}\",\"integrationKey\":\"${{ secrets.INTEGRATION_KEY }}\"}" \
-            "${{ secrets.TEST_SITE_URL }}/.netlify/functions/0010_send_automatic_reminders"
+            "${{ secrets.TEST_SITE_URL }}/.netlify/functions/0010_SendAutomaticReminders"
 
   trigger-prod-arps:
     runs-on: ubuntu-latest
@@ -27,4 +27,4 @@ jobs:
           curl -X POST \
             -H "Content-Type: application/json" \
             -d "{\"adminKey\":\"${{ secrets.ADMIN_KEY }}\",\"integrationKey\":\"${{ secrets.INTEGRATION_KEY }}\"}" \
-            "${{ secrets.PROD_SITE_URL }}/.netlify/functions/0010_send_automatic_reminders"
+            "${{ secrets.PROD_SITE_URL }}/.netlify/functions/0010_SendAutomaticReminders"

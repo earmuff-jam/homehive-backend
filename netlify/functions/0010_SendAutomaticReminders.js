@@ -1,5 +1,5 @@
 /**
- * File : 0010_send_automatic_reminders.js
+ * File : 0010_SendAutomaticReminder.js
  *
  * This file is used to send automatic reminders via email
  * using Automatic Payment Reminder System (ARPS). Uses admin
@@ -83,7 +83,7 @@ export const handler = async (event) => {
 
         if (shouldSendAutoRenewReminder) {
           console.debug(Constants.ARPSAutoRenewReminderInit);
-          await processEmailService({
+          await processEmailSvcForAutoRenew({
             ...propertyDetails,
             ...tenant,
           }).catch((err) => console.debug(Constants.EmailFailedResponse, err));
@@ -220,10 +220,10 @@ const rentRecordExistsFn = async (propertyId, nextMonthStr) => {
   return false;
 };
 
-// processEmailService ...
+// processEmailSvcForAutoRenew ...
 // defines a function that is used to process data to the email service
-const processEmailService = async (data) => {
-  const generatedMsg = generateMessageBody(data);
+const processEmailSvcForAutoRenew = async (data) => {
+  const generatedMsg = generateMsgForAutoRenewLease(data);
 
   const response = await fetch(
     `${process.env.SITE_URL}/.netlify/functions/0001_SendCustomEmail`,
@@ -251,9 +251,9 @@ const processEmailService = async (data) => {
   }
 };
 
-// generateMessageBody ...
+// generateMsgForAutoRenewLease ...
 // defines a function that is used to generate message body text based on the data.
-const generateMessageBody = (data) => {
+const generateMsgForAutoRenewLease = (data) => {
   const unit = data?.term.endsWith("y") ? "year" : "month";
   const leaseEndDate = dayjs(data?.startDate)
     .add(parseInt(data?.term), unit)
